@@ -19,12 +19,13 @@ func parseM3U8(src io.Reader, handler m3u8Handler) (nBytes int, err error) {
 	//Custom Split Function - Begin
 	tokenCount := -1
 	inTokenRead := false
-	lastTokenNewline := true
-	inQuotes := false
 
 	nBytes = 0
 
 	custSplitFn := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		lastTokenNewline := true
+		inQuotes := false
+
 		tokenCount++
 		for i, ch := range data {
 			if inTokenRead {
