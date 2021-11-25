@@ -21,11 +21,10 @@ func parseM3U8(src io.Reader, handler m3u8Handler) (nBytes int, err error) {
 	inTokenRead := false
 
 	nBytes = 0
+	lastTokenNewline := true
 
 	custSplitFn := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		lastTokenNewline := true
 		inQuotes := false
-
 		tokenCount++
 		for i, ch := range data {
 			if inTokenRead {
