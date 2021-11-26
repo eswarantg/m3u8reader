@@ -9,7 +9,8 @@ import (
 )
 
 func Test_M3u8(t *testing.T) {
-	tests := []string{"test/ll_hls_byte_range.m3u8",
+	tests := []string{
+		"test/ll_hls_byte_range.m3u8",
 		"test/ll_hls_delta_update.m3u8",
 		"test/ll_hls_pl.m3u8",
 		"test/index_new.m3u8",
@@ -83,5 +84,27 @@ func Test_MPL(t *testing.T) {
 		if entry != nil {
 			fmt.Printf("\n%v %v", entry.String(), err)
 		}
+	}
+}
+
+func Test_ProgramTime(t *testing.T) {
+	tests := []string{
+		"test/index_new_Variant_450k.m3u8",
+	}
+	for i, file := range tests {
+		fmt.Printf("\n********* Test %v - %v ************", i, file)
+		f, err := os.Open(file)
+		if err != nil {
+			t.Errorf("Unable to open file")
+			return
+		}
+		defer f.Close()
+		manifest := m3u8reader.M3U8{}
+		_, err = manifest.Read(f)
+		if err != nil {
+			t.Errorf(err.Error())
+			return
+		}
+		fmt.Print(manifest.String())
 	}
 }
