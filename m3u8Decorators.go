@@ -31,11 +31,11 @@ func decorateM3U8ExtXVersion(entry *M3U8Entry) error {
 	if val, ok := entry.Values[m3u8UnknownKey]; ok {
 		newVal, err := strconv.ParseUint(val.(string), 10, 32)
 		if err != nil {
-			return fmt.Errorf("%v invalid value %v - %v", M3U8TargetDuration, val, err.Error())
+			return fmt.Errorf("%v invalid value %v - %v", M3U8ExtXVersion, val, err.Error())
 		}
 		entry.Values[m3u8UnknownKey] = newVal
 	} else {
-		return fmt.Errorf("%v missing value", M3U8TargetDuration)
+		return fmt.Errorf("%v missing value", M3U8ExtXVersion)
 	}
 	return nil
 }

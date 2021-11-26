@@ -32,7 +32,7 @@ func (m *M3U8Entry) URI() (string, error) {
 type M3U8 struct {
 	Entries             []M3U8Entry
 	MediaSequenceNumber int64
-	targetDuration      int32
+	targetDuration      float64
 	lastSegEntry        *M3U8Entry
 	lastPartEntry       *M3U8Entry
 	lastEntryWCTime     time.Time
@@ -48,7 +48,7 @@ func (m *M3U8) String() string {
 	return toret
 }
 
-func (m *M3U8) TargetDuration() int32 {
+func (m *M3U8) TargetDuration() float64 {
 	return m.targetDuration
 }
 func (m *M3U8) LastSegment() *M3U8Entry {
@@ -85,7 +85,7 @@ func (m *M3U8) postRecord(tag string, kvpairs map[string]interface{}) (err error
 	case M3U8ExtXMediaSequence:
 		m.MediaSequenceNumber = entry.Values[m3u8UnknownKey].(int64)
 	case M3U8TargetDuration:
-		m.targetDuration = entry.Values[m3u8UnknownKey].(int32)
+		m.targetDuration = entry.Values[m3u8UnknownKey].(float64)
 	case M3U8ExtXIProgramDateTime:
 		m.lastEntryWCTime = entry.Values[m3u8UnknownKey].(time.Time)
 		m.lastPartWCTime = entry.Values[m3u8UnknownKey].(time.Time)
