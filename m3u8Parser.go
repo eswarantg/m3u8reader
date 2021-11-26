@@ -26,6 +26,7 @@ func parseM3U8(src io.Reader, handler m3u8Handler) (nBytes int, err error) {
 	custSplitFn := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
 		inQuotes := false
 		tokenCount++
+		carriageReturnRead := false
 		for i, ch := range data {
 			if inTokenRead {
 				if ch != ':' && ch != '\n' {
@@ -64,24 +65,37 @@ func parseM3U8(src io.Reader, handler m3u8Handler) (nBytes int, err error) {
 			if ch == '\n' {
 				lastTokenNewline = true
 				if i > 0 {
-					if data[0] == '\n' {
+					if data[0] == '\n' || data[0] == '\r' {
 						//String before
 						nBytes += i
-						return i, data[1:i], nil
+						if carriageReturnRead {
+							return i, data[2:i], nil
+						} else {
+							return i, data[1:i], nil
+						}
 					} else {
 						//String before
 						nBytes += i
 						return i, data[0:i], nil
 					}
 				}
-				nBytes += 1
-				return 1, data[0:1], nil
+				if carriageReturnRead {
+					nBytes += 2
+					return 2, data[1:2], nil
+				} else {
+					nBytes += 1
+					return 1, data[0:1], nil
+				}
 			} else {
 				if i > 0 && data[i-1] != '\n' {
 					lastTokenNewline = false
 				}
+				carriageReturnRead = false
 			}
 			switch ch {
+			case '\r':
+				carriageReturnRead = true
+				continue
 			case '"':
 				inQuotes = true
 				continue
