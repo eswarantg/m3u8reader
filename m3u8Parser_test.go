@@ -21,7 +21,7 @@ func Test_MasterM3u8(t *testing.T) {
 	//f, err := os.Open("test/ll_hls_pl.m3u8")
 	//f, err := os.Open("test/index_new.m3u8")
 	//f, err := os.Open("test/index_new_Variant_450k.m3u8")
-	f, err := os.Open("test/tv5.m3u8")
+	f, err := os.Open("test/manifest.m3u8")
 	//f, err := os.Open("test/tv5_TS-50002_1_video.m3u8")
 
 	if err != nil {
