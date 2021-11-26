@@ -104,7 +104,7 @@ func Test_PickSpecBandwidth(t *testing.T) {
 			t.Errorf(err.Error())
 			return
 		}
-		entry, err := manifest.GetSpecVideoMediaPlaylist(2519768)
+		entry, err := manifest.GetSpecVideoMediaPlaylist(2519769)
 		if entry != nil {
 			fmt.Printf("\n%v %v", entry.String(), err)
 		}
