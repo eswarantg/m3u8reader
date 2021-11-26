@@ -23,6 +23,8 @@ func (m *M3U8Entry) URI() (string, error) {
 		return m.Values["URI"].(string), nil
 	case M3U8ExtInf:
 		return m.Values["URI"].(string), nil
+	case M3U8ExtXPreLoadHint:
+		return m.Values["URI"].(string), nil
 	}
 	return "", fmt.Errorf("URI not available")
 }
@@ -32,6 +34,7 @@ type M3U8 struct {
 	MediaSequenceNumber int64
 	lastEntry           *M3U8Entry
 	lastEntryWCTime     time.Time
+	preloadHintEntry    *M3U8Entry
 }
 
 func (m *M3U8) String() string {
@@ -47,6 +50,9 @@ func (m *M3U8) LastSegment() *M3U8Entry {
 }
 func (m *M3U8) LastSegmentTime() time.Time {
 	return m.lastEntryWCTime
+}
+func (m *M3U8) PreloadHintEntry() *M3U8Entry {
+	return m.preloadHintEntry
 }
 
 func (m *M3U8) Read(src io.Reader) (n int, err error) {
@@ -68,6 +74,8 @@ func (m *M3U8) postRecord(tag string, kvpairs map[string]interface{}) (err error
 		m.lastEntryWCTime = entry.Values[m3u8UnknownKey].(time.Time)
 	case M3U8ExtInf:
 		m.lastEntry = &entry
+	case M3U8ExtXPreLoadHint:
+		m.preloadHintEntry = &entry
 	}
 	return
 }

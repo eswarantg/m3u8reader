@@ -9,14 +9,8 @@ import (
 )
 
 func Test_M3u8(t *testing.T) {
-	tests := []string{"test/ll_hls_byte_range.m3u8",
-		"test/ll_hls_delta_update.m3u8",
-		"test/ll_hls_pl.m3u8",
-		"test/index_new.m3u8",
-		"test/index_new_Variant_450k.m3u8",
-		"test/tv5.m3u8",
-		"test/tv5_TS-50002_1_video.m3u8",
-		"test/master.m3u8",
+	tests := []string{
+		"test/submani.m3u8",
 	}
 	for i, file := range tests {
 		fmt.Printf("\n********* Test %v - %v ************", i, file)
@@ -33,6 +27,8 @@ func Test_M3u8(t *testing.T) {
 			return
 		}
 		fmt.Print(manifest.String())
+		fmt.Printf("\n preloadHintEntry is: \n")
+		fmt.Print(manifest.PreloadHintEntry())
 	}
 }
 
