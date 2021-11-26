@@ -84,3 +84,29 @@ func Test_MPL(t *testing.T) {
 		}
 	}
 }
+
+func Test_PickSpecBandwidth(t *testing.T) {
+	tests := []string{
+		//"test/tv5.m3u8",
+		"test/main-manifest.m3u8",
+	}
+	for i, file := range tests {
+		fmt.Printf("\n********* Test %v - %v ************", i, file)
+		f, err := os.Open(file)
+		if err != nil {
+			t.Errorf("Unable to open file")
+			return
+		}
+		defer f.Close()
+		manifest := m3u8reader.M3U8{}
+		_, err = manifest.Read(f)
+		if err != nil {
+			t.Errorf(err.Error())
+			return
+		}
+		entry, err := manifest.GetSpecVideoMediaPlaylist(2519768)
+		if entry != nil {
+			fmt.Printf("\n%v %v", entry.String(), err)
+		}
+	}
+}

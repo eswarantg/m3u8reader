@@ -102,6 +102,22 @@ func (m *M3U8) GetVideoMediaPlaylist(maxBitRateBps int64) (toret *M3U8Entry, err
 	return
 }
 
+func (m *M3U8) GetSpecVideoMediaPlaylist(maxBitRateBps int64) (toret *M3U8Entry, err error) {
+	toret = nil
+	curSelectBW := int64(-1)
+	for _, entry := range m.Entries {
+		if entry.Tag == M3U8ExtXStreamInf {
+			entryBW := entry.Values["BANDWIDTH"].(int64)
+			if entryBW == maxBitRateBps && entryBW > curSelectBW {
+				toret = &entry
+				curSelectBW = entryBW
+				break
+			}
+		}
+	}
+	return
+}
+
 func (m *M3U8) GetAudioMediaPlaylist(vidEntry M3U8Entry, lang string) (toret *M3U8Entry, err error) {
 	toret = nil
 	for _, entry := range m.Entries {
