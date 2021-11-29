@@ -60,6 +60,10 @@ func (m *M3U8) LastSegmentTime() time.Time {
 func (m *M3U8) PreloadHintEntry() *M3U8Entry {
 	return m.preloadHintEntry
 }
+func (m *M3U8) LastPart() *M3U8Entry {
+	return m.lastPartEntry
+}
+
 func (m *M3U8) LastPartTime() time.Time {
 	return m.lastPartWCTime
 }
