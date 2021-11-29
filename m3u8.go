@@ -110,6 +110,7 @@ func (m *M3U8) postRecord(tag string, kvpairs map[string]interface{}) (err error
 		m.nextPartNumber = 0
 		msecDelta := time.Duration(entry.Values[m3u8UnknownKey].(float64)*1000) * time.Millisecond
 		m.lastEntryWCTime = m.lastEntryWCTime.Add(msecDelta)
+		m.lastPartWCTime = m.lastEntryWCTime
 		m.lastSegEntry = &entry
 	case M3U8ExtXPart:
 		entry.Values["programDateTime"] = m.lastPartWCTime
