@@ -30,15 +30,17 @@ func (m *M3U8Entry) URI() (string, error) {
 }
 
 type M3U8 struct {
-	Entries             []M3U8Entry
-	MediaSequenceNumber int64
-	targetDuration      float64
-	partTarget          float64
-	lastSegEntry        *M3U8Entry
-	lastPartEntry       *M3U8Entry
-	lastEntryWCTime     time.Time
-	lastPartWCTime      time.Time
-	preloadHintEntry    *M3U8Entry
+	Entries                 []M3U8Entry
+	MediaSequenceNumber     int64
+	targetDuration          float64
+	partTarget              float64
+	lastSegEntry            *M3U8Entry
+	lastPartEntry           *M3U8Entry
+	lastEntryWCTime         time.Time
+	lastPartWCTime          time.Time
+	preloadHintEntry        *M3U8Entry
+	nextMediaSequenceNumber int64
+	nextPartNumber          int64
 }
 
 func (m *M3U8) String() string {
@@ -95,6 +97,7 @@ func (m *M3U8) postRecord(tag string, kvpairs map[string]interface{}) (err error
 		m.partTarget = entry.Values["PART-TARGET"].(float64)
 	case M3U8ExtXMediaSequence:
 		m.MediaSequenceNumber = entry.Values[m3u8UnknownKey].(int64)
+		m.nextMediaSequenceNumber = m.MediaSequenceNumber
 	case M3U8TargetDuration:
 		m.targetDuration = entry.Values[m3u8UnknownKey].(float64)
 	case M3U8ExtXIProgramDateTime:
@@ -102,11 +105,17 @@ func (m *M3U8) postRecord(tag string, kvpairs map[string]interface{}) (err error
 		m.lastPartWCTime = entry.Values[m3u8UnknownKey].(time.Time)
 	case M3U8ExtInf:
 		entry.Values["programDateTime"] = m.lastEntryWCTime
+		entry.Values["mediaSequenceNumber"] = m.nextMediaSequenceNumber
+		m.nextMediaSequenceNumber += 1
+		m.nextPartNumber = 0
 		msecDelta := time.Duration(entry.Values[m3u8UnknownKey].(float64)*1000) * time.Millisecond
 		m.lastEntryWCTime = m.lastEntryWCTime.Add(msecDelta)
 		m.lastSegEntry = &entry
 	case M3U8ExtXPart:
 		entry.Values["programDateTime"] = m.lastPartWCTime
+		entry.Values["mediaSequenceNumber"] = m.nextMediaSequenceNumber
+		entry.Values["partNumber"] = m.nextPartNumber
+		m.nextPartNumber += 1
 		msecDelta := time.Duration(entry.Values["DURATION"].(float64)*1000) * time.Millisecond
 		m.lastPartWCTime = m.lastPartWCTime.Add(msecDelta)
 		m.lastPartEntry = &entry
