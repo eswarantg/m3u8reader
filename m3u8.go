@@ -33,6 +33,7 @@ type M3U8 struct {
 	Entries             []M3U8Entry
 	MediaSequenceNumber int64
 	targetDuration      float64
+	partTarget          float64
 	lastSegEntry        *M3U8Entry
 	lastPartEntry       *M3U8Entry
 	lastEntryWCTime     time.Time
@@ -51,6 +52,10 @@ func (m *M3U8) String() string {
 func (m *M3U8) TargetDuration() float64 {
 	return m.targetDuration
 }
+func (m *M3U8) PartTarget() float64 {
+	return m.partTarget
+}
+
 func (m *M3U8) LastSegment() *M3U8Entry {
 	return m.lastSegEntry
 }
@@ -86,6 +91,8 @@ func (m *M3U8) postRecord(tag string, kvpairs map[string]interface{}) (err error
 	}
 	m.Entries = append(m.Entries, entry)
 	switch entry.Tag {
+	case M3U8ExtXPartInf:
+		m.partTarget = entry.Values["PART-TARGET"].(float64)
 	case M3U8ExtXMediaSequence:
 		m.MediaSequenceNumber = entry.Values[m3u8UnknownKey].(int64)
 	case M3U8TargetDuration:
