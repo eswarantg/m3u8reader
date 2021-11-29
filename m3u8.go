@@ -100,6 +100,8 @@ func (m *M3U8) postRecord(tag string, kvpairs map[string]interface{}) (err error
 		m.lastPartWCTime = m.lastPartWCTime.Add(msecDelta)
 		m.lastPartEntry = &entry
 	case M3U8ExtXPreLoadHint:
+		//Assuming the lastPartWCTime ith all the XPart data added comuptes to this right start time.
+		entry.Values["programDateTime"] = m.lastPartWCTime
 		m.preloadHintEntry = &entry
 	}
 	return
