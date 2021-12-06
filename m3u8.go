@@ -124,6 +124,9 @@ func (m *M3U8) postRecord(tag string, kvpairs map[string]interface{}) (err error
 		//Assuming the lastPartWCTime ith all the XPart data added comuptes to this right start time.
 		entry.Values["programDateTime"] = m.lastPartWCTime
 		m.preloadHintEntry = &entry
+	case M3U8XSkip:
+		//Skip the MediaSequence
+		m.nextMediaSequenceNumber += entry.Values["SKIPPED-SEGMENTS"].(int64)
 	}
 	return
 }

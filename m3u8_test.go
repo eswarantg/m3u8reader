@@ -91,6 +91,7 @@ func Test_ProgramTime(t *testing.T) {
 	tests := []string{
 		"test/index_new_Variant_450k.m3u8",
 		"test/submani.m3u8",
+		"test/sub_hls.m3u8",
 	}
 	for i, file := range tests {
 		fmt.Printf("\n********* Test %v - %v ************", i, file)

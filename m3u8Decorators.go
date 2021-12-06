@@ -25,6 +25,7 @@ const (
 	M3U8ExtXDiscontinuity       = "EXT-X-DISCONTINUITY"
 	M3U8ExtXEndList             = "EXT-X-ENDLIST"
 	M3U8ExtXPlaylistType        = "EXT-X-PLAYLIST-TYPE"
+	M3U8XSkip                   = "EXT-X-SKIP"
 )
 
 func decorateM3U8ExtXVersion(entry *M3U8Entry) error {
@@ -207,6 +208,19 @@ func decorateM3U8ExtXServerControl(entry *M3U8Entry) error {
 	return nil
 }
 
+func decorateM3U8XSkip(entry *M3U8Entry) error {
+	if val, ok := entry.Values["SKIPPED-SEGMENTS"]; ok {
+		newVal, err := strconv.ParseInt(val.(string), 10, 64)
+		if err != nil {
+			return fmt.Errorf("%v invalid value for %v = %v - %v", M3U8XSkip, "CAN-SKIP-UNTIL", val, err.Error())
+		}
+		entry.Values["SKIPPED-SEGMENTS"] = newVal
+	} else {
+		return fmt.Errorf("%v missing %v value", M3U8XSkip, "SKIPPED-SEGMENTS")
+	}
+	return nil
+}
+
 var decorators = map[string]func(*M3U8Entry) error{
 	M3U8ExtXVersion:          decorateM3U8ExtXVersion,
 	M3U8TargetDuration:       decorateM3U8TargetDuration,
@@ -219,4 +233,5 @@ var decorators = map[string]func(*M3U8Entry) error{
 	M3U8ExtXPartInf:          decorateM3U8ExtXPartInf,
 	M3U8ExtXRenditionReport:  decorateM3U8ExtXRenditionReport,
 	M3U8ExtXServerControl:    decorateM3U8ExtXServerControl,
+	M3U8XSkip:                decorateM3U8XSkip,
 }
