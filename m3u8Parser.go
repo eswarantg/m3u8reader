@@ -13,8 +13,7 @@ const m3u8UnknownKey = "#"
 
 func parseM3U8(src io.Reader, handler m3u8Handler) (nBytes int, err error) {
 
-	brdr := bufio.NewReader(src)
-	s := bufio.NewScanner(brdr)
+	s := bufio.NewScanner(src)
 
 	//Custom Split Function - Begin
 	tokenCount := -1
