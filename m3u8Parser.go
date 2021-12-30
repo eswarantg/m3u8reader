@@ -127,7 +127,7 @@ func parseM3U8(src io.Reader, handler m3u8Handler) (nBytes int, err error) {
 	//Custom Split Function - End
 
 	//Post Record Entry - Start
-	kvpairs := make(map[string]interface{})
+	kvpairs := make(map[string]interface{}, 5)
 	lastToken := ""
 	key := ""
 	tag := ""
@@ -148,7 +148,7 @@ func parseM3U8(src io.Reader, handler m3u8Handler) (nBytes int, err error) {
 			//fmt.Printf("\npostRecordFn %v %v", tag, kvpairs)
 			err = handler.postRecord(tag, kvpairs)
 			tag = ""
-			kvpairs = make(map[string]interface{})
+			kvpairs = make(map[string]interface{}, 5)
 		}
 		return
 	}
