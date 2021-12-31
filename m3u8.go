@@ -32,8 +32,8 @@ func (m *M3U8Entry) URI() (string, error) {
 type ParserOption int
 
 const (
-	M3U8ParserQuotesUnsafe ParserOption = iota
-	M3U8ParserQuotesSafe
+	M3U8ParserQuotesSafe ParserOption = iota
+	M3U8ParserQuotesUnsafe
 )
 
 type M3U8 struct {
