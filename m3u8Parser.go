@@ -3,6 +3,8 @@ package m3u8reader
 import (
 	"bufio"
 	"io"
+	"regexp"
+	"strings"
 )
 
 type m3u8Handler interface {
@@ -10,6 +12,62 @@ type m3u8Handler interface {
 }
 
 const m3u8UnknownKey = "#"
+
+func stringSplitFunc(data []byte, atEOF bool) (advance int, token []byte, err error) {
+
+	// Return nothing if at end of file and no data passed
+	if atEOF && len(data) == 0 {
+		return 0, nil, nil
+	}
+
+	// Find the index of the input of a newline followed by a
+	// pound sign.
+	if i := strings.Index(string(data), "\n#"); i >= 0 {
+		return i + 1, data[0:i], nil
+	}
+
+	// If at end of file with data return the data
+	if atEOF {
+		return len(data), data, nil
+	}
+
+	return
+}
+
+func parseM3U8_fast(src io.Reader, handler m3u8Handler) (nBytes int, err error) {
+	s := bufio.NewScanner(src)
+	s.Split(stringSplitFunc)
+	i := 0
+	kvpairs := make(map[string]interface{}, 4)
+	re := regexp.MustCompile(`[,\n]`)
+	for s.Scan() {
+		//fmt.Printf("\n%v", s.Text())
+		entryStr := s.Text()
+		index := strings.Index(entryStr, ":")
+		tag := entryStr
+		if index > 0 {
+			tag = entryStr[:index]
+			split := re.Split(entryStr[index+1:], -1)
+			for _, token := range split {
+				if len(token) <= 0 {
+					continue
+				}
+				parts := strings.Split(token, "=")
+				if len(parts) == 2 {
+					kvpairs[parts[0]] = parts[1]
+				} else {
+					kvpairs["#"] = parts[0]
+				}
+				i++
+			}
+		}
+		handler.postRecord(tag, kvpairs)
+		for k := range kvpairs {
+			delete(kvpairs, k)
+		}
+	}
+	return 0, nil
+}
 
 func parseM3U8(src io.Reader, handler m3u8Handler) (nBytes int, err error) {
 

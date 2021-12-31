@@ -29,6 +29,13 @@ func (m *M3U8Entry) URI() (string, error) {
 	return "", fmt.Errorf("URI not available")
 }
 
+type ParserOption int
+
+const (
+	M3U8ParserQuotesUnsafe ParserOption = iota
+	M3U8ParserQuotesSafe
+)
+
 type M3U8 struct {
 	Entries                 []M3U8Entry
 	MediaSequenceNumber     int64
@@ -41,6 +48,11 @@ type M3U8 struct {
 	preloadHintEntry        *M3U8Entry
 	nextMediaSequenceNumber int64
 	nextPartNumber          int64
+	parserOption            ParserOption
+}
+
+func (m *M3U8) SetParserOption(opt ParserOption) {
+	m.parserOption = opt
 }
 
 func (m *M3U8) String() string {
@@ -82,7 +94,15 @@ func (m *M3U8) Read(src io.Reader) (n int, err error) {
 	m.lastEntryWCTime = time.Time{}
 	m.preloadHintEntry = nil
 	m.lastPartWCTime = time.Time{}
-	return parseM3U8(src, m)
+	switch m.parserOption {
+	case M3U8ParserQuotesUnsafe:
+		n, err = parseM3U8_fast(src, m)
+	case M3U8ParserQuotesSafe:
+		fallthrough
+	default:
+		n, err = parseM3U8(src, m)
+	}
+	return
 }
 
 func (m *M3U8) postRecord(tag string, kvpairs map[string]interface{}) (err error) {

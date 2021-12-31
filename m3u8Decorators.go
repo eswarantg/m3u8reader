@@ -212,7 +212,7 @@ func decorateM3U8XSkip(entry *M3U8Entry) error {
 	if val, ok := entry.Values["SKIPPED-SEGMENTS"]; ok {
 		newVal, err := strconv.ParseInt(val.(string), 10, 64)
 		if err != nil {
-			return fmt.Errorf("%v invalid value for %v = %v - %v", M3U8XSkip, "CAN-SKIP-UNTIL", val, err.Error())
+			return fmt.Errorf("%v invalid value for %v = %v - %v", M3U8XSkip, "SKIPPED-SEGMENTS", val, err.Error())
 		}
 		entry.Values["SKIPPED-SEGMENTS"] = newVal
 	} else {

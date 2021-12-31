@@ -1,7 +1,9 @@
 package m3u8reader_test
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -108,5 +110,26 @@ func Test_ProgramTime(t *testing.T) {
 			return
 		}
 		fmt.Print(manifest.String())
+	}
+}
+
+func Benchmark_Read1(b *testing.B) {
+	f, err := os.Open("test/sub.m3u8")
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	manifest, err := ioutil.ReadAll(f)
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	f.Close()
+	rdr := bytes.NewReader(manifest)
+	for n := 0; n < b.N; n++ {
+		manifest := m3u8reader.M3U8{}
+		_, err = manifest.Read(rdr)
+		if err != nil {
+			b.Errorf(err.Error())
+			return
+		}
 	}
 }
