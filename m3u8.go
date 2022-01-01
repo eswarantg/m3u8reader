@@ -11,7 +11,7 @@ type M3U8Entry struct {
 	Values map[string]interface{}
 }
 
-func (m *M3U8Entry) StoreKV(k string, v interface{}) {
+func (m *M3U8Entry) storeKV(k string, v interface{}) {
 	if m.Values == nil {
 		m.Values = make(map[string]interface{})
 	}
@@ -41,12 +41,13 @@ type ParserOption int
 const (
 	M3U8ParserQuotesSafe ParserOption = iota
 	M3U8ParserQuotesUnsafe
+	M3U8ParserYacc
 )
 
 type M3U8 struct {
 	Entries                 []M3U8Entry
 	MediaSequenceNumber     int64
-	targetDuration          float64
+	targetDuration          int64
 	partTarget              float64
 	lastSegEntry            *M3U8Entry
 	lastPartEntry           *M3U8Entry
@@ -70,7 +71,7 @@ func (m *M3U8) String() string {
 	return toret
 }
 
-func (m *M3U8) TargetDuration() float64 {
+func (m *M3U8) TargetDuration() int64 {
 	return m.targetDuration
 }
 func (m *M3U8) PartTarget() float64 {
@@ -94,14 +95,43 @@ func (m *M3U8) LastPartTime() time.Time {
 	return m.lastPartWCTime
 }
 
-func (m *M3U8) Read(src io.Reader) (n int, err error) {
+func (m *M3U8) Init() {
 	m.Entries = make([]M3U8Entry, 0)
 	m.MediaSequenceNumber = 0
 	m.lastSegEntry = nil
 	m.lastEntryWCTime = time.Time{}
 	m.preloadHintEntry = nil
 	m.lastPartWCTime = time.Time{}
+}
+
+func (m *M3U8) yyParse(src io.Reader) (err error) {
+	yyErrorVerbose = true
+	lex := NewLexerWithInit(src, func(l *Lexer) {
+		l.parseResult = m
+	})
+	defer func() {
+		if err1 := recover(); err1 != nil {
+			msg, ok := err1.(string)
+			if ok {
+				err = fmt.Errorf("%v : at line %v", msg, lex.Line())
+				return
+			}
+			err = fmt.Errorf("%v : panic handled : at line %v", err1, lex.Line())
+			return
+		}
+	}()
+	result := yyParse(lex)
+	if result != 0 {
+		err = fmt.Errorf("yyparse returned failure")
+	}
+	return
+}
+
+func (m *M3U8) Read(src io.Reader) (n int, err error) {
+	m.Init()
 	switch m.parserOption {
+	case M3U8ParserYacc:
+		err = m.yyParse(src)
 	case M3U8ParserQuotesUnsafe:
 		n, err = parseM3U8_fast(src, m)
 	case M3U8ParserQuotesSafe:
@@ -112,7 +142,7 @@ func (m *M3U8) Read(src io.Reader) (n int, err error) {
 	return
 }
 
-func (m *M3U8) PostRecordEntry(entry M3U8Entry) (err error) {
+func (m *M3U8) postRecordEntry(entry M3U8Entry) (err error) {
 	m.Entries = append(m.Entries, entry)
 	switch entry.Tag {
 	case M3U8ExtXPartInf:
@@ -121,7 +151,7 @@ func (m *M3U8) PostRecordEntry(entry M3U8Entry) (err error) {
 		m.MediaSequenceNumber = entry.Values[m3u8UnknownKey].(int64)
 		m.nextMediaSequenceNumber = m.MediaSequenceNumber
 	case M3U8TargetDuration:
-		m.targetDuration = entry.Values[m3u8UnknownKey].(float64)
+		m.targetDuration = entry.Values[m3u8UnknownKey].(int64)
 	case M3U8ExtXIProgramDateTime:
 		m.lastEntryWCTime = entry.Values[m3u8UnknownKey].(time.Time)
 		m.lastPartWCTime = entry.Values[m3u8UnknownKey].(time.Time)
@@ -159,7 +189,7 @@ func (m *M3U8) postRecord(tag string, kvpairs map[string]interface{}) (err error
 	if err != nil {
 		return
 	}
-	return m.PostRecordEntry(entry)
+	return m.postRecordEntry(entry)
 }
 
 func (m *M3U8) decorateEntry(entry *M3U8Entry) (err error) {

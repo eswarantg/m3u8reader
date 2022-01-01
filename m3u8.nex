@@ -57,10 +57,6 @@
 /,/                    { lval.i = COMMA; return lval.i }
 
 //
-package m3u8gen
-import "os"
+package m3u8reader
 import "strconv"
 import "time"
-func main() {
-  yyParse(NewLexer(os.Stdin))
-}

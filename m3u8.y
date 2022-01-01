@@ -1,25 +1,34 @@
 %{
-package m3u8gen
+package m3u8reader
 
-import "github.com/eswarantg/m3u8reader"
 import "time"
 
-func TagName(token int) string {
-      const TOKSTART = 4
-      token -= TAG_FIRST + 1
-      token += TOKSTART
-      return yyToknames[token]
-}
-func AttrName(token int) string {
-      const TOKSTART = 4
-      token -= ATTR_FIRST + 1
-      token += TOKSTART
-      return yyToknames[token]
+func getM3U8Store(l yyLexer) *M3U8 {
+  var lexer *Lexer
+  var ok bool
+  var obj *M3U8
+  lexer, ok = l.(*Lexer)
+  if !ok {
+        panic("unknown lexer")
+  }
+  obj, ok = lexer.parseResult.(*M3U8)
+  if !ok {
+        panic("unknown object")
+  }
+  if obj == nil {
+        panic("nil object")
+  }
+  return obj
 }
 
-func setResult(l yyLexer, v *m3u8reader.M3U8) {
-  l.(*Lexer).parseResult = v
+type KeyValuePair struct{
+   k string
+   v interface{}
 }
+
+
+
+
 
 %}
 
@@ -30,9 +39,10 @@ func setResult(l yyLexer, v *m3u8reader.M3U8) {
     s string;
     r string;
     t time.Time;
+    kv KeyValuePair;
     val interface{}
-    entry m3u8reader.M3U8Entry
-    manifest m3u8reader.M3U8
+    entry M3U8Entry
+    manifest *M3U8
 }
 
 %token TAG_FIRST
@@ -93,42 +103,42 @@ func setResult(l yyLexer, v *m3u8reader.M3U8) {
 %type <i> ATTRTOKEN
 %type <val> VALUE
 %type <entry> ATTRLIST
-%type <entry> ATTRANDVAL 
+%type <kv> ATTRANDVAL 
 %type <entry> entry
-%type <manifest> entries 
-%type <manifest> manifest 
+%type <manifest> entries
 
 %start manifest
 
 %%
 
-manifest:  TAG_EXTM3U entries { setResult(yylex, &$$) }
+manifest: entries
 
-entries :  entry  { $$.PostRecordEntry($1) }
-        |  entries entry { $$.PostRecordEntry($2) }
+entries :  entry  { if $$ == nil { $$=getM3U8Store(yylex) }; $$.postRecordEntry($1); $1=M3U8Entry{} }
+        |  entries entry { if $$ == nil { $$=getM3U8Store(yylex) }; $1.postRecordEntry($2); $2=M3U8Entry{}; }
 
-entry : TAG_EXT_X_VERSION INTEGERVAL { $$.Tag = TagName($1);  $$.StoreKV("#",$2) } 
-      | TAG_EXT_X_STREAM_INF ATTRLIST SECONDLINEVALUE { $$.Tag = TagName($1);  $$.StoreKV("#",$3) } 
-      | TAG_EXT_X_INDEPENDENT_SEGMENTS { $$.Tag = TagName($1) } 
-      | TAG_EXT_X_MEDIA ATTRLIST { $$.Tag = TagName($1) } 
-      | TAG_EXT_X_TARGETDURATION INTEGERVAL { $$.Tag = TagName($1);  $$.StoreKV("#",$2) } 
-      | TAG_EXT_X_SERVER_CONTROL ATTRLIST { $$.Tag = TagName($1) } 
-      | TAG_EXT_X_PART_INF ATTRLIST { $$.Tag = TagName($1) } 
-      | TAG_EXT_X_MEDIA_SEQUENCE INTEGERVAL { $$.Tag = TagName($1);  $$.StoreKV("#",$2) } 
-      | TAG_EXT_X_SKIP ATTRLIST { $$.Tag = TagName($1) } 
-      | TAG_EXTINF FLOATVAL COMMA SECONDLINEVALUE { $$.Tag = TagName($1);  $$.StoreKV("#",$2) ; $$.StoreKV("URI",$4) } 
-      | TAG_EXTINF INTEGERVAL COMMA SECONDLINEVALUE { $$.Tag = TagName($1);  $$.StoreKV("#",float64($2)) ; $$.StoreKV("URI",$4) } 
-      | TAG_EXT_X_PROGRAM_DATE_TIME TIMEVAL { $$.Tag = TagName($1);  $$.StoreKV("#",$2) } 
-      | TAG_EXT_X_PART ATTRLIST { $$.Tag = TagName($1) } 
-      | TAG_EXT_X_PRELOAD_HINT ATTRLIST { $$.Tag = TagName($1) } 
-      | TAG_EXT_X_RENDITION_REPORT ATTRLIST { $$.Tag = TagName($1) } 
-      | TAG_EXT_X_MAP ATTRLIST { $$.Tag = TagName($1) } 
+entry : TAG_EXTM3U { $$.Tag = tagName($1); } 
+      | TAG_EXT_X_VERSION INTEGERVAL { $$.Tag = tagName($1);  $$.storeKV("#",$2) } 
+      | TAG_EXT_X_STREAM_INF ATTRLIST SECONDLINEVALUE { $$.Tag = tagName($1); $2.storeKV("#",$3); $$.Values = $2.Values }
+      | TAG_EXT_X_INDEPENDENT_SEGMENTS { $$.Tag = tagName($1) } 
+      | TAG_EXT_X_MEDIA ATTRLIST { $$.Tag = tagName($1); $$.Values = $2.Values  } 
+      | TAG_EXT_X_TARGETDURATION INTEGERVAL { $$.Tag = tagName($1);  $$.storeKV("#",$2) } 
+      | TAG_EXT_X_SERVER_CONTROL ATTRLIST { $$.Tag = tagName($1) ; $$.Values = $2.Values } 
+      | TAG_EXT_X_PART_INF ATTRLIST { $$.Tag = tagName($1) ; $$.Values = $2.Values } 
+      | TAG_EXT_X_MEDIA_SEQUENCE INTEGERVAL { $$.Tag = tagName($1);  $$.storeKV("#",$2) } 
+      | TAG_EXT_X_SKIP ATTRLIST { $$.Tag = tagName($1) ; $$.Values = $2.Values } 
+      | TAG_EXTINF FLOATVAL COMMA SECONDLINEVALUE { $$.Tag = tagName($1);  $$.storeKV("#",$2) ; $$.storeKV("URI",$4) } 
+      | TAG_EXTINF INTEGERVAL COMMA SECONDLINEVALUE { $$.Tag = tagName($1);  $$.storeKV("#",float64($2)) ; $$.storeKV("URI",$4) } 
+      | TAG_EXT_X_PROGRAM_DATE_TIME TIMEVAL { $$.Tag = tagName($1);  $$.storeKV("#",$2) } 
+      | TAG_EXT_X_PART ATTRLIST { $$.Tag = tagName($1); $$.Values = $2.Values  } 
+      | TAG_EXT_X_PRELOAD_HINT ATTRLIST { $$.Tag = tagName($1) ; $$.Values = $2.Values } 
+      | TAG_EXT_X_RENDITION_REPORT ATTRLIST { $$.Tag = tagName($1) ; $$.Values = $2.Values } 
+      | TAG_EXT_X_MAP ATTRLIST { $$.Tag = tagName($1); $$.Values = $2.Values  } 
 
-ATTRLIST : ATTRANDVAL
-         | ATTRLIST COMMA ATTRANDVAL 
+ATTRLIST : ATTRANDVAL { $$.storeKV($1.k, $1.v) }
+         | ATTRLIST COMMA ATTRANDVAL { $1.storeKV($3.k, $3.v); $$ = $1 } 
 
-ATTRANDVAL : ATTRTOKEN VALUE { $$.StoreKV(AttrName($1),$2) } 
-           | ATTRKEY VALUE { $$.StoreKV($1,$2) } 
+ATTRANDVAL : ATTRTOKEN VALUE { $$.k = attrName($1); $$.v=$2 } 
+           | ATTRKEY VALUE { $$.k = $1; $$.v=$2 } 
 
 ATTRTOKEN : ATTR_BANDWIDTH { $$ = $1 }
           | ATTR_AVERAGE_BANDWIDTH { $$ = $1 }

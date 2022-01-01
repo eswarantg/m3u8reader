@@ -6,28 +6,6 @@ import (
 	"time"
 )
 
-const (
-	M3U8FormatIdentifier        = "EXTM3U"
-	M3U8ExtXVersion             = "EXT-X-VERSION"
-	M3U8TargetDuration          = "EXT-X-TARGETDURATION"
-	M3U8ExtXMedia               = "EXT-X-MEDIA"
-	M3U8ExtXStreamInf           = "EXT-X-STREAM-INF"
-	M3U8ExtXIFrameStreamInf     = "EXT-X-I-FRAME-STREAM-INF"
-	M3U8ExtXMediaSequence       = "EXT-X-MEDIA-SEQUENCE"
-	M3U8ExtXIProgramDateTime    = "EXT-X-PROGRAM-DATE-TIME"
-	M3U8ExtInf                  = "EXTINF"
-	M3U8ExtXIndependentSegments = "EXT-X-INDEPENDENT-SEGMENTS"
-	M3U8ExtXPart                = "EXT-X-PART"
-	M3U8ExtXPartInf             = "EXT-X-PART-INF"
-	M3U8ExtXRenditionReport     = "EXT-X-RENDITION-REPORT"
-	M3U8ExtXPreLoadHint         = "EXT-X-PRELOAD-HINT"
-	M3U8ExtXServerControl       = "EXT-X-SERVER-CONTROL"
-	M3U8ExtXDiscontinuity       = "EXT-X-DISCONTINUITY"
-	M3U8ExtXEndList             = "EXT-X-ENDLIST"
-	M3U8ExtXPlaylistType        = "EXT-X-PLAYLIST-TYPE"
-	M3U8XSkip                   = "EXT-X-SKIP"
-)
-
 func decorateM3U8ExtXVersion(entry *M3U8Entry) error {
 	if val, ok := entry.Values[m3u8UnknownKey]; ok {
 		newVal, err := strconv.ParseUint(val.(string), 10, 32)
@@ -43,7 +21,7 @@ func decorateM3U8ExtXVersion(entry *M3U8Entry) error {
 
 func decorateM3U8TargetDuration(entry *M3U8Entry) error {
 	if val, ok := entry.Values[m3u8UnknownKey]; ok {
-		newVal, err := strconv.ParseFloat(val.(string), 32)
+		newVal, err := strconv.ParseInt(val.(string), 10, 32)
 		if err != nil {
 			return fmt.Errorf("%v invalid value %v - %v", M3U8TargetDuration, val, err.Error())
 		}
