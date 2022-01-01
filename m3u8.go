@@ -7,13 +7,13 @@ import (
 )
 
 type M3U8Entry struct {
-	Tag    string
-	Values map[string]interface{}
+	Tag    TagId
+	Values map[AttrId]interface{}
 }
 
-func (m *M3U8Entry) storeKV(k string, v interface{}) {
+func (m *M3U8Entry) storeKV(k AttrId, v interface{}) {
 	if m.Values == nil {
-		m.Values = make(map[string]interface{})
+		m.Values = make(map[AttrId]interface{})
 	}
 	m.Values[k] = v
 }
@@ -25,13 +25,13 @@ func (m *M3U8Entry) String() string {
 func (m *M3U8Entry) URI() (string, error) {
 	switch m.Tag {
 	case M3U8ExtXStreamInf:
-		return m.Values[m3u8UnknownKey].(string), nil
+		return m.Values[M3U8Uri].(string), nil
 	case M3U8ExtXMedia:
-		return m.Values["URI"].(string), nil
+		return m.Values[M3U8Uri].(string), nil
 	case M3U8ExtInf:
-		return m.Values["URI"].(string), nil
+		return m.Values[M3U8Uri].(string), nil
 	case M3U8ExtXPreLoadHint:
-		return m.Values["URI"].(string), nil
+		return m.Values[M3U8Uri].(string), nil
 	}
 	return "", fmt.Errorf("URI not available")
 }
@@ -146,44 +146,44 @@ func (m *M3U8) postRecordEntry(entry M3U8Entry) (err error) {
 	m.Entries = append(m.Entries, entry)
 	switch entry.Tag {
 	case M3U8ExtXPartInf:
-		m.partTarget = entry.Values["PART-TARGET"].(float64)
+		m.partTarget = entry.Values[M3U8PartTarget].(float64)
 	case M3U8ExtXMediaSequence:
-		m.MediaSequenceNumber = entry.Values[m3u8UnknownKey].(int64)
+		m.MediaSequenceNumber = entry.Values[INTUnknownAttr].(int64)
 		m.nextMediaSequenceNumber = m.MediaSequenceNumber
 	case M3U8TargetDuration:
-		m.targetDuration = entry.Values[m3u8UnknownKey].(int64)
+		m.targetDuration = entry.Values[INTUnknownAttr].(int64)
 	case M3U8ExtXIProgramDateTime:
-		m.lastEntryWCTime = entry.Values[m3u8UnknownKey].(time.Time)
-		m.lastPartWCTime = entry.Values[m3u8UnknownKey].(time.Time)
+		m.lastEntryWCTime = entry.Values[INTUnknownAttr].(time.Time)
+		m.lastPartWCTime = entry.Values[INTUnknownAttr].(time.Time)
 	case M3U8ExtInf:
-		entry.Values["programDateTime"] = m.lastEntryWCTime
-		entry.Values["mediaSequenceNumber"] = m.nextMediaSequenceNumber
+		entry.Values[INTProgramDateTime] = m.lastEntryWCTime
+		entry.Values[INTMediaSequenceNumber] = m.nextMediaSequenceNumber
 		m.nextMediaSequenceNumber += 1
 		m.nextPartNumber = 0
-		msecDelta := time.Duration(entry.Values[m3u8UnknownKey].(float64)*1000) * time.Millisecond
+		msecDelta := time.Duration(entry.Values[INTUnknownAttr].(float64)*1000) * time.Millisecond
 		m.lastEntryWCTime = m.lastEntryWCTime.Add(msecDelta)
 		m.lastPartWCTime = m.lastEntryWCTime
 		m.lastSegEntry = &entry
 	case M3U8ExtXPart:
-		entry.Values["programDateTime"] = m.lastPartWCTime
-		entry.Values["mediaSequenceNumber"] = m.nextMediaSequenceNumber
-		entry.Values["partNumber"] = m.nextPartNumber
+		entry.Values[INTProgramDateTime] = m.lastPartWCTime
+		entry.Values[INTMediaSequenceNumber] = m.nextMediaSequenceNumber
+		entry.Values[INTPartNumber] = m.nextPartNumber
 		m.nextPartNumber += 1
-		msecDelta := time.Duration(entry.Values["DURATION"].(float64)*1000) * time.Millisecond
+		msecDelta := time.Duration(entry.Values[M3U8Duration].(float64)*1000) * time.Millisecond
 		m.lastPartWCTime = m.lastPartWCTime.Add(msecDelta)
 		m.lastPartEntry = &entry
 	case M3U8ExtXPreLoadHint:
 		//Assuming the lastPartWCTime ith all the XPart data added comuptes to this right start time.
-		entry.Values["programDateTime"] = m.lastPartWCTime
+		entry.Values[INTProgramDateTime] = m.lastPartWCTime
 		m.preloadHintEntry = &entry
 	case M3U8XSkip:
 		//Skip the MediaSequence
-		m.nextMediaSequenceNumber += entry.Values["SKIPPED-SEGMENTS"].(int64)
+		m.nextMediaSequenceNumber += entry.Values[M3U8SkippedSegments].(int64)
 	}
 	return
 }
 
-func (m *M3U8) postRecord(tag string, kvpairs map[string]interface{}) (err error) {
+func (m *M3U8) postRecord(tag TagId, kvpairs map[AttrId]interface{}) (err error) {
 	entry := M3U8Entry{Tag: tag, Values: kvpairs}
 	err = m.decorateEntry(&entry)
 	if err != nil {
@@ -205,7 +205,7 @@ func (m *M3U8) GetVideoMediaPlaylist(maxBitRateBps int64) (toret *M3U8Entry, err
 	curSelectBW := int64(-1)
 	for _, entry := range m.Entries {
 		if entry.Tag == M3U8ExtXStreamInf {
-			entryBW := entry.Values["BANDWIDTH"].(int64)
+			entryBW := entry.Values[M3U8Bandwidth].(int64)
 			if entryBW <= maxBitRateBps && entryBW > curSelectBW {
 				entryObj = entry
 				toret = &entryObj
@@ -220,8 +220,8 @@ func (m *M3U8) GetAudioMediaPlaylist(vidEntry M3U8Entry, lang string) (toret *M3
 	toret = nil
 	for _, entry := range m.Entries {
 		if entry.Tag == M3U8ExtXMedia {
-			if lang == entry.Values["LANGUAGE"].(string) {
-				if vidEntry.Values["AUDIO"].(string) == entry.Values["GROUP-ID"].(string) {
+			if lang == entry.Values[M3U8Language].(string) {
+				if vidEntry.Values[M3U8Audio].(string) == entry.Values[M3U8GroupId].(string) {
 					toret = &entry
 					break
 				}

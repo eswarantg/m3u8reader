@@ -3,6 +3,13 @@ package m3u8reader
 
 import "time"
 
+func tokenIdToTagId(token int) TagId {
+	return TagId(token - TAG_FIRST - 1)
+}
+func attrTokenToTagId(token int) AttrId {
+	return AttrId(token - ATTR_FIRST - 1)
+}
+
 func getM3U8Store(l yyLexer) *M3U8 {
   var lexer *Lexer
   var ok bool
@@ -22,7 +29,7 @@ func getM3U8Store(l yyLexer) *M3U8 {
 }
 
 type KeyValuePair struct{
-   k string
+   k AttrId
    v interface{}
 }
 
@@ -116,29 +123,29 @@ manifest: entries
 entries :  entry  { if $$ == nil { $$=getM3U8Store(yylex) }; $$.postRecordEntry($1); $1=M3U8Entry{} }
         |  entries entry { if $$ == nil { $$=getM3U8Store(yylex) }; $1.postRecordEntry($2); $2=M3U8Entry{}; }
 
-entry : TAG_EXTM3U { $$.Tag = tagName($1); } 
-      | TAG_EXT_X_VERSION INTEGERVAL { $$.Tag = tagName($1);  $$.storeKV("#",$2) } 
-      | TAG_EXT_X_STREAM_INF ATTRLIST SECONDLINEVALUE { $$.Tag = tagName($1); $2.storeKV("#",$3); $$.Values = $2.Values }
-      | TAG_EXT_X_INDEPENDENT_SEGMENTS { $$.Tag = tagName($1) } 
-      | TAG_EXT_X_MEDIA ATTRLIST { $$.Tag = tagName($1); $$.Values = $2.Values  } 
-      | TAG_EXT_X_TARGETDURATION INTEGERVAL { $$.Tag = tagName($1);  $$.storeKV("#",$2) } 
-      | TAG_EXT_X_SERVER_CONTROL ATTRLIST { $$.Tag = tagName($1) ; $$.Values = $2.Values } 
-      | TAG_EXT_X_PART_INF ATTRLIST { $$.Tag = tagName($1) ; $$.Values = $2.Values } 
-      | TAG_EXT_X_MEDIA_SEQUENCE INTEGERVAL { $$.Tag = tagName($1);  $$.storeKV("#",$2) } 
-      | TAG_EXT_X_SKIP ATTRLIST { $$.Tag = tagName($1) ; $$.Values = $2.Values } 
-      | TAG_EXTINF FLOATVAL COMMA SECONDLINEVALUE { $$.Tag = tagName($1);  $$.storeKV("#",$2) ; $$.storeKV("URI",$4) } 
-      | TAG_EXTINF INTEGERVAL COMMA SECONDLINEVALUE { $$.Tag = tagName($1);  $$.storeKV("#",float64($2)) ; $$.storeKV("URI",$4) } 
-      | TAG_EXT_X_PROGRAM_DATE_TIME TIMEVAL { $$.Tag = tagName($1);  $$.storeKV("#",$2) } 
-      | TAG_EXT_X_PART ATTRLIST { $$.Tag = tagName($1); $$.Values = $2.Values  } 
-      | TAG_EXT_X_PRELOAD_HINT ATTRLIST { $$.Tag = tagName($1) ; $$.Values = $2.Values } 
-      | TAG_EXT_X_RENDITION_REPORT ATTRLIST { $$.Tag = tagName($1) ; $$.Values = $2.Values } 
-      | TAG_EXT_X_MAP ATTRLIST { $$.Tag = tagName($1); $$.Values = $2.Values  } 
+entry : TAG_EXTM3U { $$.Tag = tokenIdToTagId($1); } 
+      | TAG_EXT_X_VERSION INTEGERVAL { $$.Tag = tokenIdToTagId($1);  $$.storeKV(INTUnknownAttr,$2) } 
+      | TAG_EXT_X_STREAM_INF ATTRLIST SECONDLINEVALUE { $$.Tag = tokenIdToTagId($1); $2.storeKV(INTUnknownAttr,$3); $$.Values = $2.Values }
+      | TAG_EXT_X_INDEPENDENT_SEGMENTS { $$.Tag = tokenIdToTagId($1) } 
+      | TAG_EXT_X_MEDIA ATTRLIST { $$.Tag = tokenIdToTagId($1); $$.Values = $2.Values  } 
+      | TAG_EXT_X_TARGETDURATION INTEGERVAL { $$.Tag = tokenIdToTagId($1);  $$.storeKV(INTUnknownAttr,$2) } 
+      | TAG_EXT_X_SERVER_CONTROL ATTRLIST { $$.Tag = tokenIdToTagId($1) ; $$.Values = $2.Values } 
+      | TAG_EXT_X_PART_INF ATTRLIST { $$.Tag = tokenIdToTagId($1) ; $$.Values = $2.Values } 
+      | TAG_EXT_X_MEDIA_SEQUENCE INTEGERVAL { $$.Tag = tokenIdToTagId($1);  $$.storeKV(INTUnknownAttr,$2) } 
+      | TAG_EXT_X_SKIP ATTRLIST { $$.Tag = tokenIdToTagId($1) ; $$.Values = $2.Values } 
+      | TAG_EXTINF FLOATVAL COMMA SECONDLINEVALUE { $$.Tag = tokenIdToTagId($1);  $$.storeKV(INTUnknownAttr,$2) ; $$.storeKV(M3U8Uri,$4) } 
+      | TAG_EXTINF INTEGERVAL COMMA SECONDLINEVALUE { $$.Tag = tokenIdToTagId($1);  $$.storeKV(INTUnknownAttr,float64($2)) ; $$.storeKV(M3U8Uri,$4) } 
+      | TAG_EXT_X_PROGRAM_DATE_TIME TIMEVAL { $$.Tag = tokenIdToTagId($1);  $$.storeKV(INTUnknownAttr,$2) } 
+      | TAG_EXT_X_PART ATTRLIST { $$.Tag = tokenIdToTagId($1); $$.Values = $2.Values  } 
+      | TAG_EXT_X_PRELOAD_HINT ATTRLIST { $$.Tag = tokenIdToTagId($1) ; $$.Values = $2.Values } 
+      | TAG_EXT_X_RENDITION_REPORT ATTRLIST { $$.Tag = tokenIdToTagId($1) ; $$.Values = $2.Values } 
+      | TAG_EXT_X_MAP ATTRLIST { $$.Tag = tokenIdToTagId($1); $$.Values = $2.Values  } 
 
 ATTRLIST : ATTRANDVAL { $$.storeKV($1.k, $1.v) }
          | ATTRLIST COMMA ATTRANDVAL { $1.storeKV($3.k, $3.v); $$ = $1 } 
 
-ATTRANDVAL : ATTRTOKEN VALUE { $$.k = attrName($1); $$.v=$2 } 
-           | ATTRKEY VALUE { $$.k = $1; $$.v=$2 } 
+ATTRANDVAL : ATTRTOKEN VALUE { $$.k = attrTokenToTagId($1); $$.v=$2 } 
+           | ATTRKEY VALUE { $$.k = attrToAttrId[$1]; $$.v=$2 } 
 
 ATTRTOKEN : ATTR_BANDWIDTH { $$ = $1 }
           | ATTR_AVERAGE_BANDWIDTH { $$ = $1 }

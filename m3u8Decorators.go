@@ -7,12 +7,12 @@ import (
 )
 
 func decorateM3U8ExtXVersion(entry *M3U8Entry) error {
-	if val, ok := entry.Values[m3u8UnknownKey]; ok {
+	if val, ok := entry.Values[INTUnknownAttr]; ok {
 		newVal, err := strconv.ParseUint(val.(string), 10, 32)
 		if err != nil {
 			return fmt.Errorf("%v invalid value %v - %v", M3U8ExtXVersion, val, err.Error())
 		}
-		entry.Values[m3u8UnknownKey] = newVal
+		entry.Values[INTUnknownAttr] = newVal
 	} else {
 		return fmt.Errorf("%v missing value", M3U8ExtXVersion)
 	}
@@ -20,12 +20,12 @@ func decorateM3U8ExtXVersion(entry *M3U8Entry) error {
 }
 
 func decorateM3U8TargetDuration(entry *M3U8Entry) error {
-	if val, ok := entry.Values[m3u8UnknownKey]; ok {
+	if val, ok := entry.Values[INTUnknownAttr]; ok {
 		newVal, err := strconv.ParseInt(val.(string), 10, 32)
 		if err != nil {
 			return fmt.Errorf("%v invalid value %v - %v", M3U8TargetDuration, val, err.Error())
 		}
-		entry.Values[m3u8UnknownKey] = newVal
+		entry.Values[INTUnknownAttr] = newVal
 	} else {
 		return fmt.Errorf("%v missing value", M3U8TargetDuration)
 	}
@@ -33,15 +33,15 @@ func decorateM3U8TargetDuration(entry *M3U8Entry) error {
 }
 
 func decorateM3U8ExtXStreamInf(entry *M3U8Entry) error {
-	if _, ok := entry.Values[m3u8UnknownKey]; !ok {
+	if _, ok := entry.Values[INTUnknownAttr]; !ok {
 		return fmt.Errorf("%v missing %v value", M3U8ExtXStreamInf, "URI")
 	}
-	if val, ok := entry.Values["BANDWIDTH"]; ok {
+	if val, ok := entry.Values[M3U8Bandwidth]; ok {
 		newVal, err := strconv.ParseInt(val.(string), 10, 32)
 		if err != nil {
 			return fmt.Errorf("%v invalid value for %v = %v - %v", M3U8ExtXStreamInf, "BANDWIDTH", val, err.Error())
 		}
-		entry.Values["BANDWIDTH"] = newVal
+		entry.Values[M3U8Bandwidth] = newVal
 	} else {
 		return fmt.Errorf("%v missing %v value", M3U8ExtXStreamInf, "BANDWIDTH")
 	}
@@ -49,31 +49,31 @@ func decorateM3U8ExtXStreamInf(entry *M3U8Entry) error {
 }
 
 func decorateM3U8ExtXMedia(entry *M3U8Entry) error {
-	if _, ok := entry.Values["URI"]; !ok {
+	if _, ok := entry.Values[M3U8Uri]; !ok {
 		return fmt.Errorf("%v missing %v value", M3U8ExtXStreamInf, "URI")
 	}
-	if _, ok := entry.Values["TYPE"]; !ok {
+	if _, ok := entry.Values[M3U8Type]; !ok {
 		return fmt.Errorf("%v missing %v value", M3U8ExtXStreamInf, "TYPE")
 	}
-	if _, ok := entry.Values["LANGUAGE"]; !ok {
+	if _, ok := entry.Values[M3U8Language]; !ok {
 		return fmt.Errorf("%v missing %v value", M3U8ExtXStreamInf, "LANGUAGE")
 	}
-	if _, ok := entry.Values["GROUP-ID"]; !ok {
+	if _, ok := entry.Values[M3U8GroupId]; !ok {
 		return fmt.Errorf("%v missing %v value", M3U8ExtXStreamInf, "GROUP-ID")
 	}
 	return nil
 }
 
 func decorateM3U8ExtInf(entry *M3U8Entry) error {
-	if _, ok := entry.Values["URI"]; !ok {
+	if _, ok := entry.Values[M3U8Uri]; !ok {
 		return fmt.Errorf("%v missing %v value", M3U8ExtInf, "URI")
 	}
-	if val, ok := entry.Values[m3u8UnknownKey]; ok {
+	if val, ok := entry.Values[INTUnknownAttr]; ok {
 		newVal, err := strconv.ParseFloat(val.(string), 32)
 		if err != nil {
 			return fmt.Errorf("%v invalid value %v - %v", M3U8ExtInf, val, err.Error())
 		}
-		entry.Values[m3u8UnknownKey] = newVal
+		entry.Values[INTUnknownAttr] = newVal
 	} else {
 		return fmt.Errorf("%v missing %v value", M3U8ExtInf, m3u8UnknownKey)
 	}
@@ -81,12 +81,12 @@ func decorateM3U8ExtInf(entry *M3U8Entry) error {
 }
 
 func decorateM3U8ExtXIProgramDateTime(entry *M3U8Entry) error {
-	if val, ok := entry.Values[m3u8UnknownKey]; ok {
+	if val, ok := entry.Values[INTUnknownAttr]; ok {
 		newVal, err := time.Parse(time.RFC3339, val.(string))
 		if err != nil {
 			return fmt.Errorf("%v invalid value %v - %v", M3U8ExtXIProgramDateTime, val, err.Error())
 		}
-		entry.Values[m3u8UnknownKey] = newVal
+		entry.Values[INTUnknownAttr] = newVal
 	} else {
 		return fmt.Errorf("%v missing %v value", M3U8ExtXIProgramDateTime, "URI")
 	}
@@ -94,15 +94,15 @@ func decorateM3U8ExtXIProgramDateTime(entry *M3U8Entry) error {
 }
 
 func decorateM3U8ExtXPart(entry *M3U8Entry) error {
-	if _, ok := entry.Values["URI"]; !ok {
+	if _, ok := entry.Values[M3U8Uri]; !ok {
 		return fmt.Errorf("%v missing %v value", M3U8ExtXPart, "URI")
 	}
-	if val, ok := entry.Values["DURATION"]; ok {
+	if val, ok := entry.Values[M3U8Duration]; ok {
 		newVal, err := strconv.ParseFloat(val.(string), 32)
 		if err != nil {
 			return fmt.Errorf("%v invalid value for %v = %v - %v", M3U8ExtXPart, "DURATION", val, err.Error())
 		}
-		entry.Values["DURATION"] = newVal
+		entry.Values[M3U8Duration] = newVal
 	} else {
 		return fmt.Errorf("%v missing %v value", M3U8ExtXPart, "DURATION")
 	}
@@ -110,32 +110,32 @@ func decorateM3U8ExtXPart(entry *M3U8Entry) error {
 }
 
 func decorateM3U8ExtXMediaSequence(entry *M3U8Entry) error {
-	if val, ok := entry.Values[m3u8UnknownKey]; ok {
+	if val, ok := entry.Values[INTUnknownAttr]; ok {
 		newVal, err := strconv.ParseInt(val.(string), 10, 64)
 		if err != nil {
 			return fmt.Errorf("%v invalid value for %v = %v - %v", M3U8ExtXMediaSequence, m3u8UnknownKey, val, err.Error())
 		}
-		entry.Values[m3u8UnknownKey] = newVal
+		entry.Values[INTUnknownAttr] = newVal
 	} else {
 		return fmt.Errorf("%v missing %v value", M3U8ExtXMediaSequence, m3u8UnknownKey)
 	}
-	if val, ok := entry.Values["PART-TARGET"]; ok {
+	if val, ok := entry.Values[M3U8PartTarget]; ok {
 		newVal, err := strconv.ParseFloat(val.(string), 64)
 		if err != nil {
 			return fmt.Errorf("%v invalid value for %v = %v - %v", M3U8ExtXMediaSequence, "PART-TARGET", val, err.Error())
 		}
-		entry.Values["PART-TARGET"] = newVal
+		entry.Values[M3U8PartTarget] = newVal
 	} // else failure not required it is optional
 	return nil
 }
 
 func decorateM3U8ExtXPartInf(entry *M3U8Entry) error {
-	if val, ok := entry.Values["PART-TARGET"]; ok {
+	if val, ok := entry.Values[M3U8PartTarget]; ok {
 		newVal, err := strconv.ParseFloat(val.(string), 64)
 		if err != nil {
 			return fmt.Errorf("%v invalid value for %v = %v - %v", M3U8ExtXPartInf, "PART-TARGET", val, err.Error())
 		}
-		entry.Values["PART-TARGET"] = newVal
+		entry.Values[M3U8PartTarget] = newVal
 	} else {
 		return fmt.Errorf("%v missing %v value", M3U8ExtXPartInf, "PART-TARGET")
 	}
@@ -143,21 +143,21 @@ func decorateM3U8ExtXPartInf(entry *M3U8Entry) error {
 }
 
 func decorateM3U8ExtXRenditionReport(entry *M3U8Entry) error {
-	if val, ok := entry.Values["LAST-MSN"]; ok {
+	if val, ok := entry.Values[M3U8LastMsn]; ok {
 		newVal, err := strconv.ParseUint(val.(string), 10, 64)
 		if err != nil {
 			return fmt.Errorf("%v invalid value for %v = %v - %v", M3U8ExtInf, "LAST-MSN", val, err.Error())
 		}
-		entry.Values["LAST-MSN"] = newVal
+		entry.Values[M3U8LastMsn] = newVal
 	} else {
 		return fmt.Errorf("%v missing %v value", M3U8ExtXPart, "LAST-MSN")
 	}
-	if val, ok := entry.Values["LAST-PART"]; ok {
+	if val, ok := entry.Values[M3U8LastPart]; ok {
 		newVal, err := strconv.ParseUint(val.(string), 10, 64)
 		if err != nil {
 			return fmt.Errorf("%v invalid value for %v = %v - %v", M3U8ExtInf, "LAST-PART", val, err.Error())
 		}
-		entry.Values["LAST-PART"] = newVal
+		entry.Values[M3U8LastPart] = newVal
 	} else {
 		return fmt.Errorf("%v missing %v value", M3U8ExtXPart, "LAST-PART")
 	}
@@ -165,21 +165,21 @@ func decorateM3U8ExtXRenditionReport(entry *M3U8Entry) error {
 }
 
 func decorateM3U8ExtXServerControl(entry *M3U8Entry) error {
-	if val, ok := entry.Values["CAN-SKIP-UNTIL"]; ok {
+	if val, ok := entry.Values[M3U8CanSkipUntil]; ok {
 		newVal, err := strconv.ParseFloat(val.(string), 64)
 		if err != nil {
 			return fmt.Errorf("%v invalid value for %v = %v - %v", M3U8ExtXServerControl, "CAN-SKIP-UNTIL", val, err.Error())
 		}
-		entry.Values["CAN-SKIP-UNTIL"] = newVal
+		entry.Values[M3U8CanSkipUntil] = newVal
 	} else {
 		return fmt.Errorf("%v missing %v value", M3U8ExtXServerControl, "CAN-SKIP-UNTIL")
 	}
-	if val, ok := entry.Values["PART-HOLD-BACK"]; ok {
+	if val, ok := entry.Values[M3U8PartHoldBack]; ok {
 		newVal, err := strconv.ParseFloat(val.(string), 64)
 		if err != nil {
 			return fmt.Errorf("%v invalid value for %v = %v - %v", M3U8ExtXServerControl, "PART-HOLD-BACK", val, err.Error())
 		}
-		entry.Values["PART-HOLD-BACK"] = newVal
+		entry.Values[M3U8PartHoldBack] = newVal
 	} else {
 		return fmt.Errorf("%v missing %v value", M3U8ExtXServerControl, "PART-HOLD-BACK")
 	}
@@ -187,19 +187,19 @@ func decorateM3U8ExtXServerControl(entry *M3U8Entry) error {
 }
 
 func decorateM3U8XSkip(entry *M3U8Entry) error {
-	if val, ok := entry.Values["SKIPPED-SEGMENTS"]; ok {
+	if val, ok := entry.Values[M3U8SkippedSegments]; ok {
 		newVal, err := strconv.ParseInt(val.(string), 10, 64)
 		if err != nil {
 			return fmt.Errorf("%v invalid value for %v = %v - %v", M3U8XSkip, "SKIPPED-SEGMENTS", val, err.Error())
 		}
-		entry.Values["SKIPPED-SEGMENTS"] = newVal
+		entry.Values[M3U8SkippedSegments] = newVal
 	} else {
 		return fmt.Errorf("%v missing %v value", M3U8XSkip, "SKIPPED-SEGMENTS")
 	}
 	return nil
 }
 
-var decorators = map[string]func(*M3U8Entry) error{
+var decorators = map[TagId]func(*M3U8Entry) error{
 	M3U8ExtXVersion:          decorateM3U8ExtXVersion,
 	M3U8TargetDuration:       decorateM3U8TargetDuration,
 	M3U8ExtXStreamInf:        decorateM3U8ExtXStreamInf,

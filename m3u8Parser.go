@@ -8,7 +8,7 @@ import (
 )
 
 type m3u8Handler interface {
-	postRecord(tag string, kvpairs map[string]interface{}) error
+	postRecord(tag TagId, kvpairs map[AttrId]interface{}) error
 }
 
 const m3u8UnknownKey = "#"
@@ -38,7 +38,7 @@ func parseM3U8_fast(src io.Reader, handler m3u8Handler) (nBytes int, err error) 
 	s := bufio.NewScanner(src)
 	s.Split(stringSplitFunc)
 	i := 0
-	kvpairs := make(map[string]interface{}, 4)
+	kvpairs := make(map[AttrId]interface{}, 4)
 	re := regexp.MustCompile(`[,\n]`)
 	for s.Scan() {
 		//fmt.Printf("\n%v", s.Text())
@@ -54,14 +54,20 @@ func parseM3U8_fast(src io.Reader, handler m3u8Handler) (nBytes int, err error) 
 				}
 				parts := strings.Split(token, "=")
 				if len(parts) == 2 {
-					kvpairs[parts[0]] = parts[1]
+					attrId, ok := attrToAttrId[parts[0]]
+					if ok {
+						kvpairs[attrId] = parts[1]
+					}
 				} else {
-					kvpairs["#"] = parts[0]
+					kvpairs[INTUnknownAttr] = parts[0]
 				}
 				i++
 			}
 		}
-		handler.postRecord(tag, kvpairs)
+		tagId, ok := tagToTagId[tag]
+		if ok {
+			handler.postRecord(tagId, kvpairs)
+		}
 		for k := range kvpairs {
 			delete(kvpairs, k)
 		}
@@ -185,28 +191,31 @@ func parseM3U8(src io.Reader, handler m3u8Handler) (nBytes int, err error) {
 	//Custom Split Function - End
 
 	//Post Record Entry - Start
-	kvpairs := make(map[string]interface{}, 5)
+	kvpairs := make(map[AttrId]interface{}, 5)
 	lastToken := ""
 	key := ""
 	tag := ""
 	postRecordFn := func() (err error) {
 		if len(tag) > 0 {
 			if len(key) > 0 {
-				if _, ok := kvpairs[m3u8UnknownKey]; !ok {
-					kvpairs[m3u8UnknownKey] = key
+				if _, ok := kvpairs[INTUnknownAttr]; !ok {
+					kvpairs[INTUnknownAttr] = key
 				} else {
 					//Already present
-					switch tag {
+					switch tagToTagId[tag] {
 					case M3U8ExtInf:
-						kvpairs["URI"] = key
+						kvpairs[M3U8Uri] = key
 					}
 				}
 				key = ""
 			}
 			//fmt.Printf("\npostRecordFn %v %v", tag, kvpairs)
-			err = handler.postRecord(tag, kvpairs)
+			tagId, ok := tagToTagId[tag]
+			if ok {
+				err = handler.postRecord(tagId, kvpairs)
+			}
 			tag = ""
-			kvpairs = make(map[string]interface{}, 5)
+			kvpairs = make(map[AttrId]interface{}, 5)
 		}
 		return
 	}
@@ -226,19 +235,25 @@ func parseM3U8(src io.Reader, handler m3u8Handler) (nBytes int, err error) {
 				tag = curToken
 			case ",", ":":
 				if len(key) > 0 {
-					kvpairs[m3u8UnknownKey] = key
+					kvpairs[INTUnknownAttr] = key
 					key = ""
 				}
 				if curToken != "\n" {
 					key = curToken
 				}
 			case "=":
-				kvpairs[key] = curToken
+				attrId, ok := attrToAttrId[key]
+				if ok {
+					kvpairs[attrId] = curToken
+				}
 				key = ""
 			case "\n":
 				if curToken != "\n" {
 					if len(key) > 0 {
-						kvpairs[key] = curToken
+						attrId, ok := attrToAttrId[key]
+						if ok {
+							kvpairs[attrId] = curToken
+						}
 						key = ""
 					} else {
 						key = curToken

@@ -10,7 +10,7 @@ import (
 type TestHandler struct {
 }
 
-func (TestHandler) postRecord(tag string, kvpairs map[string]interface{}) error {
+func (TestHandler) postRecord(tag TagId, kvpairs map[AttrId]interface{}) error {
 	fmt.Printf("\n%v %v", tag, kvpairs)
 	return nil
 }
@@ -18,7 +18,7 @@ func (TestHandler) postRecord(tag string, kvpairs map[string]interface{}) error 
 type EmptyHandler struct {
 }
 
-func (EmptyHandler) postRecord(tag string, kvpairs map[string]interface{}) error {
+func (EmptyHandler) postRecord(tag TagId, kvpairs map[AttrId]interface{}) error {
 	//fmt.Printf("\n%v %v", tag, kvpairs)
 	return nil
 }

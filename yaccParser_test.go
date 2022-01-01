@@ -18,7 +18,7 @@ func (p *testParser) Parse(l yyLexer) int {
 		if i <= 0 {
 			break
 		}
-		fmt.Printf("\n%v: %v %v %v", j, i, tagName(i), p.lval)
+		fmt.Printf("\n%v: %v %v %v", j, i, tokenIdToTagId(i), p.lval)
 		j++
 	}
 	return 0
