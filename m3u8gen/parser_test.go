@@ -59,7 +59,7 @@ func Test_M3u8Yacc(t *testing.T) {
 	yyDebug = 5
 	yyErrorVerbose = true
 	tests := []string{
-		//"../test/ll_hls_byte_range.m3u8",
+		"../test/ll_hls_byte_range.m3u8",
 		//"../test/ll_hls_delta_update.m3u8",
 		//"../test/ll_hls_pl.m3u8",
 		//"../test/index_new.m3u8",
