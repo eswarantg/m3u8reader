@@ -25,7 +25,7 @@ func (m *M3U8Entry) String() string {
 func (m *M3U8Entry) URI() (string, error) {
 	switch m.Tag {
 	case M3U8ExtXStreamInf:
-		return m.Values[M3U8Uri].(string), nil
+		return m.Values[INTUnknownAttr].(string), nil
 	case M3U8ExtXMedia:
 		return m.Values[M3U8Uri].(string), nil
 	case M3U8ExtInf:
