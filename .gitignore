@@ -5,11 +5,6 @@
 *.so
 *.dylib
 
-y.go
-y.output
-m3u8.nn.go
-
-
 # Test binary, built with `go test -c`
 *.test
 
