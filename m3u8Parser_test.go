@@ -2,9 +2,7 @@ package m3u8reader
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -49,6 +47,7 @@ func Test_MasterM3u8(t *testing.T) {
 	}
 }
 
+/*
 func BenchmarkParse1(b *testing.B) {
 	f, err := os.Open("test/sub.m3u8")
 	if err != nil {
@@ -90,3 +89,4 @@ func BenchmarkParse2(b *testing.B) {
 		}
 	}
 }
+*/

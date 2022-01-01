@@ -11,6 +11,13 @@ type M3U8Entry struct {
 	Values map[string]interface{}
 }
 
+func (m *M3U8Entry) StoreKV(k string, v interface{}) {
+	if m.Values == nil {
+		m.Values = make(map[string]interface{})
+	}
+	m.Values[k] = v
+}
+
 func (m *M3U8Entry) String() string {
 	return fmt.Sprintf("%v %v", m.Tag, m.Values)
 }
@@ -105,12 +112,7 @@ func (m *M3U8) Read(src io.Reader) (n int, err error) {
 	return
 }
 
-func (m *M3U8) postRecord(tag string, kvpairs map[string]interface{}) (err error) {
-	entry := M3U8Entry{Tag: tag, Values: kvpairs}
-	err = m.decorateEntry(&entry)
-	if err != nil {
-		return
-	}
+func (m *M3U8) PostRecordEntry(entry M3U8Entry) (err error) {
 	m.Entries = append(m.Entries, entry)
 	switch entry.Tag {
 	case M3U8ExtXPartInf:
@@ -149,6 +151,15 @@ func (m *M3U8) postRecord(tag string, kvpairs map[string]interface{}) (err error
 		m.nextMediaSequenceNumber += entry.Values["SKIPPED-SEGMENTS"].(int64)
 	}
 	return
+}
+
+func (m *M3U8) postRecord(tag string, kvpairs map[string]interface{}) (err error) {
+	entry := M3U8Entry{Tag: tag, Values: kvpairs}
+	err = m.decorateEntry(&entry)
+	if err != nil {
+		return
+	}
+	return m.PostRecordEntry(entry)
 }
 
 func (m *M3U8) decorateEntry(entry *M3U8Entry) (err error) {
