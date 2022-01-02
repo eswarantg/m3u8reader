@@ -1,4 +1,4 @@
-package m3u8reader
+package yaccparser
 
 //go:generate goyacc -o y.go  m3u8.y
 

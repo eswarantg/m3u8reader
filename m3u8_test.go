@@ -59,7 +59,7 @@ func Test_M3u82(t *testing.T) {
 		}
 		defer f.Close()
 		manifest := m3u8reader.M3U8{}
-		manifest.SetParserOption(m3u8reader.M3U8ParserQuotesUnsafe)
+		manifest.SetParserOption(m3u8reader.M3U8ParserScanner1)
 		_, err = manifest.Read(f)
 		if err != nil {
 			t.Errorf(err.Error())
@@ -144,8 +144,13 @@ func Test_MPL(t *testing.T) {
 			return
 		}
 		entry, err := manifest.GetVideoMediaPlaylist(2519767)
+		if err != nil {
+			fmt.Printf("\nErr %v", err)
+		}
 		if entry != nil {
-			fmt.Printf("\n%v %v", entry.String(), err)
+			fmt.Printf("\n%v", entry.String())
+			url, err := entry.URI()
+			fmt.Printf("\n%v %v", url, err)
 		}
 	}
 }
@@ -187,7 +192,7 @@ func Benchmark_Read1(b *testing.B) {
 	rdr := bytes.NewReader(manifest)
 	for n := 0; n < b.N; n++ {
 		manifest := m3u8reader.M3U8{}
-		manifest.SetParserOption(m3u8reader.M3U8ParserQuotesSafe)
+		manifest.SetParserOption(m3u8reader.M3U8ParserScanner1)
 		_, err = manifest.Read(rdr)
 		if err != nil {
 			b.Errorf(err.Error())
@@ -209,7 +214,7 @@ func Benchmark_Read2(b *testing.B) {
 	rdr := bytes.NewReader(manifest)
 	for n := 0; n < b.N; n++ {
 		manifest := m3u8reader.M3U8{}
-		manifest.SetParserOption(m3u8reader.M3U8ParserQuotesUnsafe)
+		manifest.SetParserOption(m3u8reader.M3U8ParserScanner2)
 		_, err = manifest.Read(rdr)
 		if err != nil {
 			b.Errorf(err.Error())

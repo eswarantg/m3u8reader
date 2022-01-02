@@ -1,0 +1,62 @@
+/#EXTM3U/                         { lval.i = tag_EXTM3U; return lval.i }
+/\n#EXT-X-VERSION:/               { lval.i = tag_EXT_X_VERSION; return lval.i }
+/\n#EXT-X-INDEPENDENT-SEGMENTS/   { lval.i = tag_EXT_X_INDEPENDENT_SEGMENTS; return lval.i }
+/\n#EXT-X-MEDIA:/                 { lval.i = tag_EXT_X_MEDIA; return lval.i }
+/\n#EXT-X-STREAM-INF:/            { lval.i = tag_EXT_X_STREAM_INF; return lval.i }
+/\n#EXT-X-TARGETDURATION:/        { lval.i = tag_EXT_X_TARGETDURATION; return lval.i }
+/\n#EXT-X-SERVER-CONTROL:/        { lval.i = tag_EXT_X_SERVER_CONTROL; return lval.i }
+/\n#EXT-X-PART-INF:/              { lval.i = tag_EXT_X_PART_INF; return lval.i }
+/\n#EXT-X-MEDIA-SEQUENCE:/        { lval.i = tag_EXT_X_MEDIA_SEQUENCE; return lval.i }
+/\n#EXT-X-SKIP:/                  { lval.i = tag_EXT_X_SKIP; return lval.i }
+/\n#EXTINF:/                      { lval.i = tag_EXTINF; return lval.i }
+/\n#EXT-X-PROGRAM-DATE-TIME:/     { lval.i = tag_EXT_X_PROGRAM_DATE_TIME; return lval.i }
+/\n#EXT-X-PART:/                  { lval.i = tag_EXT_X_PART; return lval.i }
+/\n#EXT-X-PRELOAD-HINT:/          { lval.i = tag_EXT_X_PRELOAD_HINT; return lval.i }
+/\n#EXT-X-RENDITION-REPORT:/      { lval.i = tag_EXT_X_RENDITION_REPORT; return lval.i }
+/\n#EXT-X-MAP:/                   { lval.i = tag_EXT_X_MAP; return lval.i }
+/\n[A-Za-z][^\"\n, #=]+/          { t := yylex.Text(); lval.s = t[1:]; return token_SECONDLINEVALUE }
+/\n[ \t]*/                        { /* ignore empty line */ }
+/\n#[^(EXT)].*/                   { /* ignore #comment lines */ }
+
+/BANDWIDTH=/           { lval.i = token_ATTR_BANDWIDTH; return lval.i }
+/AVERAGE-BANDWIDTH=/   { lval.i = token_ATTR_AVERAGE_BANDWIDTH; return lval.i }
+/RESOLUTION=/          { lval.i = token_ATTR_RESOLUTION; return lval.i }
+/FRAME-RATE=/          { lval.i = token_ATTR_FRAME_RATE; return lval.i }
+/CODECS=/              { lval.i = token_ATTR_CODECS; return lval.i }
+/AUDIO=/               { lval.i = token_ATTR_AUDIO; return lval.i }
+/TYPE=/                { lval.i = token_ATTR_TYPE; return lval.i }
+/GROUP-ID=/            { lval.i = token_ATTR_GROUP_ID; return lval.i }
+/NAME=/                { lval.i = token_ATTR_NAME; return lval.i }
+/DEFAULT=/             { lval.i = token_ATTR_DEFAULT; return lval.i }
+/AUTOSELECT=/          { lval.i = token_ATTR_AUTOSELECT; return lval.i }
+/LANGUAGE=/            { lval.i = token_ATTR_LANGUAGE; return lval.i }
+/CHANNELS=/            { lval.i = token_ATTR_CHANNELS; return lval.i }
+/URI=/                 { lval.i = token_ATTR_URI; return lval.i }
+/CAN-BLOCK-RELOAD=/    { lval.i = token_ATTR_CAN_BLOCK_RELOAD; return lval.i }
+/CAN-SKIP-UNTIL=/      { lval.i = token_ATTR_CAN_SKIP_UNTIL; return lval.i }
+/PART-HOLD-BACK=/      { lval.i = token_ATTR_PART_HOLD_BACK; return lval.i }
+/PART-TARGET=/         { lval.i = token_ATTR_PART_TARGET; return lval.i }
+/SKIPPED-SEGMENTS=/    { lval.i = token_ATTR_SKIPPED_SEGMENTS; return lval.i }
+/DURATION=/            { lval.i = token_ATTR_DURATION; return lval.i }
+/INDEPENDENT=/         { lval.i = token_ATTR_INDEPENDENT; return lval.i }
+/LAST-MSN=/            { lval.i = token_ATTR_LAST_MSN; return lval.i }
+/LAST-PART=/           { lval.i = token_ATTR_LAST_PART; return lval.i }
+
+/[A-Za-z\-]+=/         { t := yylex.Text(); lval.s = t[0:len(t)-1]; return token_ATTRKEY }
+
+/[0-9]+\-[0-9]+\-[0-9]+T[0-9]+:[0-9]+:[0-9]+\.[0-9]+Z[+-][0-9]+:[0-9]+/    { lval.t,_ = time.Parse(time.RFC3339Nano, yylex.Text()); return token_TIMEVAL }
+/[0-9]+\-[0-9]+\-[0-9]+T[0-9]+:[0-9]+:[0-9]+\.[0-9]+Z/                     { lval.t,_ = time.Parse(time.RFC3339Nano, yylex.Text()); return token_TIMEVAL }
+/[0-9]+\.[0-9]*/                                                           { lval.f,_ = strconv.ParseFloat(yylex.Text(),64); return token_FLOATVAL }
+/-[0-9]+\.[0-9]*/                                                          { lval.f,_ = strconv.ParseFloat(yylex.Text(),64); return token_FLOATVAL }
+/[0-9]+x[0-9]+/                                                            { lval.r = yylex.Text(); return token_RESOLUTIONVAL  }
+/[0-9]+/                                                                   { lval.i64,_ = strconv.ParseInt(yylex.Text(),10,64); return token_INTEGERVAL }
+/0[xX][0-9A-Fa-f]+/                                                        { lval.i64,_ = strconv.ParseInt(yylex.Text(),16,64); return token_INTEGERVAL }
+
+/\"[^\"\n\r]+\"/       { t := yylex.Text(); lval.s = t[1:len(t)-2]; return token_STRINGVAL }
+/[A-Za-z][^\"\n, #=]+/ { t := yylex.Text(); lval.s = t; return token_STRINGVAL }
+/,/                    { lval.i = token_COMMA; return lval.i }
+
+//
+package yaccparser
+import "strconv"
+import "time"

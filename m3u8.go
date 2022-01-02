@@ -4,43 +4,20 @@ import (
 	"fmt"
 	"io"
 	"time"
+
+	"github.com/eswarantg/m3u8reader/common"
+	"github.com/eswarantg/m3u8reader/parsers"
+	"github.com/eswarantg/m3u8reader/parsers/grammarparser"
+	"github.com/eswarantg/m3u8reader/parsers/scanparser"
+	"github.com/eswarantg/m3u8reader/parsers/yaccparser"
 )
-
-type M3U8Entry struct {
-	Tag    TagId
-	Values map[AttrId]interface{}
-}
-
-func (m *M3U8Entry) storeKV(k AttrId, v interface{}) {
-	if m.Values == nil {
-		m.Values = make(map[AttrId]interface{})
-	}
-	m.Values[k] = v
-}
-
-func (m *M3U8Entry) String() string {
-	return fmt.Sprintf("%v %v", m.Tag, m.Values)
-}
-
-func (m *M3U8Entry) URI() (string, error) {
-	switch m.Tag {
-	case M3U8ExtXStreamInf:
-		return m.Values[INTUnknownAttr].(string), nil
-	case M3U8ExtXMedia:
-		return m.Values[M3U8Uri].(string), nil
-	case M3U8ExtInf:
-		return m.Values[M3U8Uri].(string), nil
-	case M3U8ExtXPreLoadHint:
-		return m.Values[M3U8Uri].(string), nil
-	}
-	return "", fmt.Errorf("URI not available")
-}
 
 type ParserOption int
 
 const (
-	M3U8ParserQuotesSafe ParserOption = iota
-	M3U8ParserQuotesUnsafe
+	M3U8ParserScanner1 ParserOption = iota
+	M3U8ParserScanner2
+	M3U8ParserGrammar
 	M3U8ParserYacc
 )
 
@@ -103,100 +80,77 @@ func (m *M3U8) Init() {
 	m.preloadHintEntry = nil
 	m.lastPartWCTime = time.Time{}
 }
-
-func (m *M3U8) yyParse(src io.Reader) (err error) {
-	yyErrorVerbose = true
-	lex := NewLexerWithInit(src, func(l *Lexer) {
-		l.parseResult = m
-	})
-	defer func() {
-		if err1 := recover(); err1 != nil {
-			msg, ok := err1.(string)
-			if ok {
-				err = fmt.Errorf("%v : at line %v", msg, lex.Line())
-				return
-			}
-			err = fmt.Errorf("%v : panic handled : at line %v", err1, lex.Line())
-			return
-		}
-	}()
-	result := yyParse(lex)
-	if result != 0 {
-		err = fmt.Errorf("yyparse returned failure")
+func (m *M3U8) getParser() parsers.Parser {
+	switch m.parserOption {
+	case M3U8ParserYacc:
+		return &yaccparser.YaccParser{}
+	case M3U8ParserScanner2:
+		return &scanparser.ScanParser2{}
+	case M3U8ParserGrammar:
+		return &grammarparser.GrammarParser{}
+	case M3U8ParserScanner1:
+		fallthrough
+	default:
+		return &scanparser.ScanParser1{}
 	}
-	return
+}
+
+func (m *M3U8) ParseData(data []byte) (n int, err error) {
+	m.Init()
+	p := m.getParser()
+	return p.ParseData(data, m)
 }
 
 func (m *M3U8) Read(src io.Reader) (n int, err error) {
 	m.Init()
-	switch m.parserOption {
-	case M3U8ParserYacc:
-		err = m.yyParse(src)
-	case M3U8ParserQuotesUnsafe:
-		n, err = parseM3U8_fast(src, m)
-	case M3U8ParserQuotesSafe:
-		fallthrough
-	default:
-		n, err = parseM3U8(src, m)
-	}
-	return
+	p := m.getParser()
+	return p.Parse(src, m)
 }
 
 func (m *M3U8) postRecordEntry(entry M3U8Entry) (err error) {
 	m.Entries = append(m.Entries, entry)
 	switch entry.Tag {
-	case M3U8ExtXPartInf:
-		m.partTarget = entry.Values[M3U8PartTarget].(float64)
-	case M3U8ExtXMediaSequence:
-		m.MediaSequenceNumber = entry.Values[INTUnknownAttr].(int64)
+	case common.M3U8ExtXPartInf:
+		m.partTarget = entry.Values[common.M3U8PartTarget].(float64)
+	case common.M3U8ExtXMediaSequence:
+		m.MediaSequenceNumber = entry.Values[common.INTUnknownAttr].(int64)
 		m.nextMediaSequenceNumber = m.MediaSequenceNumber
-	case M3U8TargetDuration:
-		m.targetDuration = entry.Values[INTUnknownAttr].(int64)
-	case M3U8ExtXIProgramDateTime:
-		m.lastEntryWCTime = entry.Values[INTUnknownAttr].(time.Time)
-		m.lastPartWCTime = entry.Values[INTUnknownAttr].(time.Time)
-	case M3U8ExtInf:
-		entry.Values[INTProgramDateTime] = m.lastEntryWCTime
-		entry.Values[INTMediaSequenceNumber] = m.nextMediaSequenceNumber
+	case common.M3U8TargetDuration:
+		m.targetDuration = entry.Values[common.INTUnknownAttr].(int64)
+	case common.M3U8ExtXIProgramDateTime:
+		m.lastEntryWCTime = entry.Values[common.INTUnknownAttr].(time.Time)
+		m.lastPartWCTime = entry.Values[common.INTUnknownAttr].(time.Time)
+	case common.M3U8ExtInf:
+		entry.Values[common.INTProgramDateTime] = m.lastEntryWCTime
+		entry.Values[common.INTMediaSequenceNumber] = m.nextMediaSequenceNumber
 		m.nextMediaSequenceNumber += 1
 		m.nextPartNumber = 0
-		msecDelta := time.Duration(entry.Values[INTUnknownAttr].(float64)*1000) * time.Millisecond
+		msecDelta := time.Duration(entry.Values[common.INTUnknownAttr].(float64)*1000) * time.Millisecond
 		m.lastEntryWCTime = m.lastEntryWCTime.Add(msecDelta)
 		m.lastPartWCTime = m.lastEntryWCTime
 		m.lastSegEntry = &entry
-	case M3U8ExtXPart:
-		entry.Values[INTProgramDateTime] = m.lastPartWCTime
-		entry.Values[INTMediaSequenceNumber] = m.nextMediaSequenceNumber
-		entry.Values[INTPartNumber] = m.nextPartNumber
+	case common.M3U8ExtXPart:
+		entry.Values[common.INTProgramDateTime] = m.lastPartWCTime
+		entry.Values[common.INTMediaSequenceNumber] = m.nextMediaSequenceNumber
+		entry.Values[common.INTPartNumber] = m.nextPartNumber
 		m.nextPartNumber += 1
-		msecDelta := time.Duration(entry.Values[M3U8Duration].(float64)*1000) * time.Millisecond
+		msecDelta := time.Duration(entry.Values[common.M3U8Duration].(float64)*1000) * time.Millisecond
 		m.lastPartWCTime = m.lastPartWCTime.Add(msecDelta)
 		m.lastPartEntry = &entry
-	case M3U8ExtXPreLoadHint:
+	case common.M3U8ExtXPreLoadHint:
 		//Assuming the lastPartWCTime ith all the XPart data added comuptes to this right start time.
-		entry.Values[INTProgramDateTime] = m.lastPartWCTime
+		entry.Values[common.INTProgramDateTime] = m.lastPartWCTime
 		m.preloadHintEntry = &entry
-	case M3U8XSkip:
+	case common.M3U8XSkip:
 		//Skip the MediaSequence
-		m.nextMediaSequenceNumber += entry.Values[M3U8SkippedSegments].(int64)
+		m.nextMediaSequenceNumber += entry.Values[common.M3U8SkippedSegments].(int64)
 	}
 	return
 }
 
-func (m *M3U8) postRecord(tag TagId, kvpairs map[AttrId]interface{}) (err error) {
+func (m *M3U8) PostRecord(tag common.TagId, kvpairs parsers.AttrKVPairs) error {
 	entry := M3U8Entry{Tag: tag, Values: kvpairs}
-	err = m.decorateEntry(&entry)
-	if err != nil {
-		return
-	}
 	return m.postRecordEntry(entry)
-}
-
-func (m *M3U8) decorateEntry(entry *M3U8Entry) (err error) {
-	if decorateFn, ok := decorators[entry.Tag]; ok {
-		err = decorateFn(entry)
-	}
-	return
 }
 
 func (m *M3U8) GetVideoMediaPlaylist(maxBitRateBps int64) (toret *M3U8Entry, err error) {
@@ -204,8 +158,8 @@ func (m *M3U8) GetVideoMediaPlaylist(maxBitRateBps int64) (toret *M3U8Entry, err
 	var entryObj M3U8Entry
 	curSelectBW := int64(-1)
 	for _, entry := range m.Entries {
-		if entry.Tag == M3U8ExtXStreamInf {
-			entryBW := entry.Values[M3U8Bandwidth].(int64)
+		if entry.Tag == common.M3U8ExtXStreamInf {
+			entryBW := entry.Values[common.M3U8Bandwidth].(int64)
 			if entryBW <= maxBitRateBps && entryBW > curSelectBW {
 				entryObj = entry
 				toret = &entryObj
@@ -219,9 +173,9 @@ func (m *M3U8) GetVideoMediaPlaylist(maxBitRateBps int64) (toret *M3U8Entry, err
 func (m *M3U8) GetAudioMediaPlaylist(vidEntry M3U8Entry, lang string) (toret *M3U8Entry, err error) {
 	toret = nil
 	for _, entry := range m.Entries {
-		if entry.Tag == M3U8ExtXMedia {
-			if lang == entry.Values[M3U8Language].(string) {
-				if vidEntry.Values[M3U8Audio].(string) == entry.Values[M3U8GroupId].(string) {
+		if entry.Tag == common.M3U8ExtXMedia {
+			if lang == entry.Values[common.M3U8Language].(string) {
+				if vidEntry.Values[common.M3U8Audio].(string) == entry.Values[common.M3U8GroupId].(string) {
 					toret = &entry
 					break
 				}

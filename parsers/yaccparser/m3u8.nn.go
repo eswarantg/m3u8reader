@@ -1,4 +1,4 @@
-package m3u8reader
+package yaccparser
 
 import "strconv"
 import "time"
@@ -17570,89 +17570,89 @@ OUTER0:
 		switch yylex.next(0) {
 		case 0:
 			{
-				lval.i = TAG_EXTM3U
+				lval.i = tag_EXTM3U
 				return lval.i
 			}
 		case 1:
 			{
-				lval.i = TAG_EXT_X_VERSION
+				lval.i = tag_EXT_X_VERSION
 				return lval.i
 			}
 		case 2:
 			{
-				lval.i = TAG_EXT_X_INDEPENDENT_SEGMENTS
+				lval.i = tag_EXT_X_INDEPENDENT_SEGMENTS
 				return lval.i
 			}
 		case 3:
 			{
-				lval.i = TAG_EXT_X_MEDIA
+				lval.i = tag_EXT_X_MEDIA
 				return lval.i
 			}
 		case 4:
 			{
-				lval.i = TAG_EXT_X_STREAM_INF
+				lval.i = tag_EXT_X_STREAM_INF
 				return lval.i
 			}
 		case 5:
 			{
-				lval.i = TAG_EXT_X_TARGETDURATION
+				lval.i = tag_EXT_X_TARGETDURATION
 				return lval.i
 			}
 		case 6:
 			{
-				lval.i = TAG_EXT_X_SERVER_CONTROL
+				lval.i = tag_EXT_X_SERVER_CONTROL
 				return lval.i
 			}
 		case 7:
 			{
-				lval.i = TAG_EXT_X_PART_INF
+				lval.i = tag_EXT_X_PART_INF
 				return lval.i
 			}
 		case 8:
 			{
-				lval.i = TAG_EXT_X_MEDIA_SEQUENCE
+				lval.i = tag_EXT_X_MEDIA_SEQUENCE
 				return lval.i
 			}
 		case 9:
 			{
-				lval.i = TAG_EXT_X_SKIP
+				lval.i = tag_EXT_X_SKIP
 				return lval.i
 			}
 		case 10:
 			{
-				lval.i = TAG_EXTINF
+				lval.i = tag_EXTINF
 				return lval.i
 			}
 		case 11:
 			{
-				lval.i = TAG_EXT_X_PROGRAM_DATE_TIME
+				lval.i = tag_EXT_X_PROGRAM_DATE_TIME
 				return lval.i
 			}
 		case 12:
 			{
-				lval.i = TAG_EXT_X_PART
+				lval.i = tag_EXT_X_PART
 				return lval.i
 			}
 		case 13:
 			{
-				lval.i = TAG_EXT_X_PRELOAD_HINT
+				lval.i = tag_EXT_X_PRELOAD_HINT
 				return lval.i
 			}
 		case 14:
 			{
-				lval.i = TAG_EXT_X_RENDITION_REPORT
+				lval.i = tag_EXT_X_RENDITION_REPORT
 				return lval.i
 			}
 		case 15:
 			{
-				lval.i = TAG_EXT_X_MAP
+				lval.i = tag_EXT_X_MAP
 				return lval.i
 			}
 		case 16:
 			{
 				t := yylex.Text()
 				lval.s = t[1:]
-				return SECONDLINEVALUE
+				return token_SECONDLINEVALUE
 			}
 		case 17:
 			{ /* ignore empty line */
@@ -17662,175 +17662,175 @@ OUTER0:
 			}
 		case 19:
 			{
-				lval.i = ATTR_BANDWIDTH
+				lval.i = token_ATTR_BANDWIDTH
 				return lval.i
 			}
 		case 20:
 			{
-				lval.i = ATTR_AVERAGE_BANDWIDTH
+				lval.i = token_ATTR_AVERAGE_BANDWIDTH
 				return lval.i
 			}
 		case 21:
 			{
-				lval.i = ATTR_RESOLUTION
+				lval.i = token_ATTR_RESOLUTION
 				return lval.i
 			}
 		case 22:
 			{
-				lval.i = ATTR_FRAME_RATE
+				lval.i = token_ATTR_FRAME_RATE
 				return lval.i
 			}
 		case 23:
 			{
-				lval.i = ATTR_CODECS
+				lval.i = token_ATTR_CODECS
 				return lval.i
 			}
 		case 24:
 			{
-				lval.i = ATTR_AUDIO
+				lval.i = token_ATTR_AUDIO
 				return lval.i
 			}
 		case 25:
 			{
-				lval.i = ATTR_TYPE
+				lval.i = token_ATTR_TYPE
 				return lval.i
 			}
 		case 26:
 			{
-				lval.i = ATTR_GROUP_ID
+				lval.i = token_ATTR_GROUP_ID
 				return lval.i
 			}
 		case 27:
 			{
-				lval.i = ATTR_NAME
+				lval.i = token_ATTR_NAME
 				return lval.i
 			}
 		case 28:
 			{
-				lval.i = ATTR_DEFAULT
+				lval.i = token_ATTR_DEFAULT
 				return lval.i
 			}
 		case 29:
 			{
-				lval.i = ATTR_AUTOSELECT
+				lval.i = token_ATTR_AUTOSELECT
 				return lval.i
 			}
 		case 30:
 			{
-				lval.i = ATTR_LANGUAGE
+				lval.i = token_ATTR_LANGUAGE
 				return lval.i
 			}
 		case 31:
 			{
-				lval.i = ATTR_CHANNELS
+				lval.i = token_ATTR_CHANNELS
 				return lval.i
 			}
 		case 32:
 			{
-				lval.i = ATTR_URI
+				lval.i = token_ATTR_URI
 				return lval.i
 			}
 		case 33:
 			{
-				lval.i = ATTR_CAN_BLOCK_RELOAD
+				lval.i = token_ATTR_CAN_BLOCK_RELOAD
 				return lval.i
 			}
 		case 34:
 			{
-				lval.i = ATTR_CAN_SKIP_UNTIL
+				lval.i = token_ATTR_CAN_SKIP_UNTIL
 				return lval.i
 			}
 		case 35:
 			{
-				lval.i = ATTR_PART_HOLD_BACK
+				lval.i = token_ATTR_PART_HOLD_BACK
 				return lval.i
 			}
 		case 36:
 			{
-				lval.i = ATTR_PART_TARGET
+				lval.i = token_ATTR_PART_TARGET
 				return lval.i
 			}
 		case 37:
 			{
-				lval.i = ATTR_SKIPPED_SEGMENTS
+				lval.i = token_ATTR_SKIPPED_SEGMENTS
 				return lval.i
 			}
 		case 38:
 			{
-				lval.i = ATTR_DURATION
+				lval.i = token_ATTR_DURATION
 				return lval.i
 			}
 		case 39:
 			{
-				lval.i = ATTR_INDEPENDENT
+				lval.i = token_ATTR_INDEPENDENT
 				return lval.i
 			}
 		case 40:
 			{
-				lval.i = ATTR_LAST_MSN
+				lval.i = token_ATTR_LAST_MSN
 				return lval.i
 			}
 		case 41:
 			{
-				lval.i = ATTR_LAST_PART
+				lval.i = token_ATTR_LAST_PART
 				return lval.i
 			}
 		case 42:
 			{
 				t := yylex.Text()
 				lval.s = t[0 : len(t)-1]
-				return ATTRKEY
+				return token_ATTRKEY
 			}
 		case 43:
 			{
-				lval.t, _ = time.Parse(time.RFC3339, yylex.Text())
-				return TIMEVAL
+				lval.t, _ = time.Parse(time.RFC3339Nano, yylex.Text())
+				return token_TIMEVAL
 			}
 		case 44:
 			{
-				lval.t, _ = time.Parse(time.RFC3339, yylex.Text())
-				return TIMEVAL
+				lval.t, _ = time.Parse(time.RFC3339Nano, yylex.Text())
+				return token_TIMEVAL
 			}
 		case 45:
 			{
 				lval.f, _ = strconv.ParseFloat(yylex.Text(), 64)
-				return FLOATVAL
+				return token_FLOATVAL
 			}
 		case 46:
 			{
 				lval.f, _ = strconv.ParseFloat(yylex.Text(), 64)
-				return FLOATVAL
+				return token_FLOATVAL
 			}
 		case 47:
 			{
 				lval.r = yylex.Text()
-				return RESOLUTIONVAL
+				return token_RESOLUTIONVAL
 			}
 		case 48:
 			{
 				lval.i64, _ = strconv.ParseInt(yylex.Text(), 10, 64)
-				return INTEGERVAL
+				return token_INTEGERVAL
 			}
 		case 49:
 			{
 				lval.i64, _ = strconv.ParseInt(yylex.Text(), 16, 64)
-				return INTEGERVAL
+				return token_INTEGERVAL
 			}
 		case 50:
 			{
 				t := yylex.Text()
 				lval.s = t[1 : len(t)-2]
-				return STRINGVAL
+				return token_STRINGVAL
 			}
 		case 51:
 			{
 				t := yylex.Text()
 				lval.s = t
-				return STRINGVAL
+				return token_STRINGVAL
 			}
 		case 52:
 			{
-				lval.i = COMMA
+				lval.i = token_COMMA
 				return lval.i
 			}
 		default:
