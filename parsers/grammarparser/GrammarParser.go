@@ -157,15 +157,24 @@ func (p *GrammarParser) readTag(data []byte) (remain []byte, err error) {
 func (p *GrammarParser) searchTag(data []byte) (remain []byte, err error) {
 	//Assumption : must be before \n# point
 	//Assumption : len(data)>0
-	move := boolToInt[data[0] == '\r']
-	move += boolToInt[data[move] == '\n']
-	if move == 0 || data[move] != '#' {
+	p.curTag = common.M3U8UNKNOWNTAG
+	move1 := boolToInt[data[0] == '\r']
+	move1 += boolToInt[data[move1] == '\n'] //move1 != 0 -  EOL read
+	move2 := boolToInt[data[move1] == '\r']
+	move2 += boolToInt[data[move1+move2] == '\n'] //move2 != 0 - another EOL read
+	if move1 > 0 && move2 > 0 {                   //Empty line detected
+		data = data[move1:]
+		remain = data
+		p.line++
+		p.col = 0
+		return
+	}
+	if move1 == 0 || data[move1] != '#' {
 		err = fmt.Errorf("line %v, Col %v : invalid characters for new Tag", p.line, p.col)
 		return
 	}
-	data = data[move+1:]
+	data = data[move1+1:]
 	p.state = readingTag
-	p.curTag = common.M3U8UNKNOWNTAG
 	p.line++
 	p.col = 1
 	remain = data
