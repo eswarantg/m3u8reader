@@ -114,7 +114,7 @@ var attrMeta = [...]AttrMeta{
 	{attr: common.M3U8Channels, types: []ValueType{valueQuotedString}},
 	{attr: common.M3U8Uri, types: []ValueType{valueQuotedString}},
 	{attr: common.M3U8CanBlockReload, types: []ValueType{valueEnumeratedString}},
-	{attr: common.M3U8CanSkipUntil, types: []ValueType{valueDecimalInt}},
+	{attr: common.M3U8CanSkipUntil, types: []ValueType{valueSignedDecimalFloat}},
 	{attr: common.M3U8PartHoldBack, types: []ValueType{valueSignedDecimalFloat}},
 	{attr: common.M3U8PartTarget, types: []ValueType{valueSignedDecimalFloat}},
 	{attr: common.M3U8SkippedSegments, types: []ValueType{valueDecimalInt}},

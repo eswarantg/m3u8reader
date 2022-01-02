@@ -295,6 +295,9 @@ func (p *GrammarParser) readingAttributes(data []byte) (remain []byte, err error
 		if err == nil {
 			p.kv[attrId] = value
 		}
+		if len(data) == 0 {
+			break
+		}
 		//position is at the seperator
 		if data[0] != ',' {
 			break
