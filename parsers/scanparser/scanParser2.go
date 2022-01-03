@@ -18,11 +18,16 @@ type ScanParser2 struct {
 func (s *ScanParser2) PostRecord(tag common.TagId, kvpairs parsers.AttrKVPairs) error {
 	err := decorateEntry(tag, kvpairs)
 	if err != nil {
-		err = s.extHander.PostRecord(tag, kvpairs)
+		return err
 	}
+	if s.extHander == nil {
+		panic("Invalid extHandler for post")
+	}
+	err = s.extHander.PostRecord(tag, kvpairs)
 	return err
 }
 func (s *ScanParser2) Parse(rdr io.Reader, handler parsers.M3u8Handler) (nBytes int, err error) {
+	s.extHander = handler
 	return parseM3U8_fast(rdr, s)
 }
 
