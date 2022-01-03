@@ -2,7 +2,6 @@ package scanparser
 
 import (
 	"fmt"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -147,7 +146,7 @@ func convertToFloat64(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId com
 		if val := kv.Get(attrId); val != nil {
 			v, ok := val.(string)
 			if !ok {
-				panic(fmt.Sprintf("\nconvertToFloat64 %v:%v is %v not string", common.TagNames[tagId], common.AttrNames[attrId], reflect.TypeOf(val).Kind()))
+				panic(fmt.Sprintf("\nconvertToFloat64 %v:%v is %T(\"%v\") not string", common.TagNames[tagId], common.AttrNames[attrId], val, val))
 			}
 			newVal, err := strconv.ParseFloat(v, 64)
 			if err != nil {
@@ -156,7 +155,7 @@ func convertToFloat64(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId com
 			}
 			kv.Store(attrId, newVal)
 		} else if !optional {
-			return fmt.Errorf("missing Float value %v[%v]", common.TagNames[tagId], common.AttrNames[attrId])
+			return fmt.Errorf("missing Float value %v[\"%v\"]", common.TagNames[tagId], common.AttrNames[attrId])
 		}
 	}
 	return nil
@@ -166,7 +165,7 @@ func convertToInt64(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId commo
 		if val := kv.Get(attrId); val != nil {
 			v, ok := val.(string)
 			if !ok {
-				panic(fmt.Sprintf("\nconvertToInt64 %v:%v is %v not string", common.TagNames[tagId], common.AttrNames[attrId], reflect.TypeOf(val).Kind()))
+				panic(fmt.Sprintf("\nconvertToInt64 %v:%v is %T(\"%v\") not string", common.TagNames[tagId], common.AttrNames[attrId], val, val))
 			}
 			newVal, err := strconv.ParseInt(v, 10, 64)
 			if err != nil {
@@ -185,7 +184,7 @@ func convertToTime(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId common
 		if val := kv.Get(attrId); val != nil {
 			v, ok := val.(string)
 			if !ok {
-				panic(fmt.Sprintf("\nconvertToTime %v:%v is %v not string", common.TagNames[tagId], common.AttrNames[attrId], reflect.TypeOf(val).Kind()))
+				panic(fmt.Sprintf("\nconvertToTime %v:%v is %T(\"%v\") not string", common.TagNames[tagId], common.AttrNames[attrId], val, val))
 			}
 			newVal, err := time.Parse(time.RFC3339Nano, v)
 			if err != nil {

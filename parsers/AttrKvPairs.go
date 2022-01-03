@@ -18,11 +18,17 @@ var AttrKVPairsPool = sync.Pool{
 	},
 }
 
+//Initialized to ZERO/FALSE....automatically
+var AttrKVPairsSyncPool bool
+
 type AttrKVPairs struct {
 	m map[common.AttrId]interface{}
 }
 
 func (a *AttrKVPairs) Done() {
+	if !AttrKVPairsSyncPool {
+		return
+	}
 	for k := range a.m {
 		delete(a.m, k)
 	}
@@ -34,6 +40,9 @@ func (a *AttrKVPairs) Done() {
 }
 
 func NewAttrKVPairsDebug(label string) (ret *AttrKVPairs) {
+	if !AttrKVPairsSyncPool {
+		return &AttrKVPairs{m: make(map[common.AttrId]interface{}, 10)}
+	}
 	var ok bool
 	obj := AttrKVPairsPool.Get()
 	if obj == nil {
