@@ -3,6 +3,7 @@ package scanparser
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 
 	"github.com/eswarantg/m3u8reader/common"
@@ -13,13 +14,16 @@ type ScanParser1 struct {
 	extHander parsers.M3u8Handler
 }
 
-func (s *ScanParser1) PostRecord(tag common.TagId, kvpairs parsers.AttrKVPairs) error {
-	err := decorateEntry(tag, kvpairs)
-	if err != nil {
-		return err
+func (s *ScanParser1) PostRecord(tag common.TagId, kvpairs *parsers.AttrKVPairs) error {
+	var err error
+	if kvpairs != nil {
+		err = decorateEntry(tag, *kvpairs)
+		if err != nil {
+			return err
+		}
 	}
 	if s.extHander == nil {
-		panic("Invalid extHandler for post")
+		panic("\nInvalid extHandler for post")
 	}
 	err = s.extHander.PostRecord(tag, kvpairs)
 	return err
@@ -155,31 +159,35 @@ func parseM3U8(src io.Reader, handler parsers.M3u8Handler) (nBytes int, err erro
 	//Custom Split Function - End
 
 	//Post Record Entry - Start
-	kvpairs := make(map[common.AttrId]interface{}, 5)
+	var kvpairs *parsers.AttrKVPairs
+	kvpairs = parsers.NewAttrKVPairs() //initalize
 	lastToken := ""
 	key := ""
 	tag := ""
+	tagId := common.M3U8UNKNOWNTAG
 	postRecordFn := func() (err error) {
 		if len(tag) > 0 {
 			if len(key) > 0 {
-				if _, ok := kvpairs[common.INTUnknownAttr]; !ok {
-					kvpairs[common.INTUnknownAttr] = key
-				} else {
+				newkey := common.INTUnknownAttr
+				if kvpairs.Exists(common.INTUnknownAttr) {
 					//Already present
-					switch common.TagToTagId[tag] {
+					switch tagId {
 					case common.M3U8ExtInf:
-						kvpairs[common.M3U8Uri] = key
+						newkey = common.M3U8Uri
+					default:
+						//panic(fmt.Sprintf("Duplicate INTUnknownAttr for %v required.", tag))
 					}
 				}
+				kvpairs.Store(newkey, key)
 				key = ""
 			}
 			//fmt.Printf("\npostRecordFn %v %v", tag, kvpairs)
 			tagId, ok := common.TagToTagId[tag]
 			if ok {
 				err = handler.PostRecord(tagId, kvpairs)
+				kvpairs = parsers.NewAttrKVPairs() //use new one next time
 			}
 			tag = ""
-			kvpairs = make(map[common.AttrId]interface{}, 5)
 		}
 		return
 	}
@@ -188,6 +196,9 @@ func parseM3U8(src io.Reader, handler parsers.M3u8Handler) (nBytes int, err erro
 	for s.Scan() {
 		//fmt.Printf("\nToken %v : %v", tokenCount, s.Text())
 		curToken := s.Text()
+		if len(curToken) == 0 {
+			continue
+		}
 		if curToken == "#" {
 			err = postRecordFn()
 			if err != nil {
@@ -196,10 +207,18 @@ func parseM3U8(src io.Reader, handler parsers.M3u8Handler) (nBytes int, err erro
 		} else {
 			switch lastToken {
 			case "#":
+				if curToken == "\n" {
+					continue //skip new line with only #
+				}
+				var ok bool
 				tag = curToken
+				tagId, ok = common.TagToTagId[tag]
+				if !ok {
+					panic(fmt.Sprintf("\nUnknown Tag : \"%v\"", tag))
+				}
 			case ",", ":":
 				if len(key) > 0 {
-					kvpairs[common.INTUnknownAttr] = key
+					kvpairs.Store(common.INTUnknownAttr, key)
 					key = ""
 				}
 				if curToken != "\n" {
@@ -208,7 +227,7 @@ func parseM3U8(src io.Reader, handler parsers.M3u8Handler) (nBytes int, err erro
 			case "=":
 				attrId, ok := common.AttrToAttrId[key]
 				if ok {
-					kvpairs[attrId] = curToken
+					kvpairs.Store(attrId, curToken)
 				}
 				key = ""
 			case "\n":
@@ -216,7 +235,7 @@ func parseM3U8(src io.Reader, handler parsers.M3u8Handler) (nBytes int, err erro
 					if len(key) > 0 {
 						attrId, ok := common.AttrToAttrId[key]
 						if ok {
-							kvpairs[attrId] = curToken
+							kvpairs.Store(attrId, curToken)
 						}
 						key = ""
 					} else {

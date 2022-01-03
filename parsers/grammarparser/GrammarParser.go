@@ -24,7 +24,7 @@ const (
 type GrammarParser struct {
 	state  parserState
 	curTag common.TagId
-	kv     parsers.AttrKVPairs
+	kv     *parsers.AttrKVPairs
 	line   int
 	col    int
 }
@@ -139,7 +139,6 @@ func (p *GrammarParser) readTag(data []byte) (remain []byte, err error) {
 	p.curTag = tagId
 	//create a new map for the attributes
 	//Last record is owned by the post done
-	p.kv = make(parsers.AttrKVPairs, 5)
 	readBytes := pos + boolToInt[data[pos] == ':']
 	p.col += readBytes - 1
 	remain = data[readBytes:]
@@ -293,7 +292,7 @@ func (p *GrammarParser) readingAttributes(data []byte) (remain []byte, err error
 		var value interface{}
 		value, data, err = p.getValue(data, attrId, formats[0])
 		if err == nil {
-			p.kv[attrId] = value
+			p.kv.Store(attrId, value)
 		}
 		if len(data) == 0 {
 			break
@@ -326,7 +325,7 @@ func (p *GrammarParser) readingOpens(data []byte) (remain []byte, err error) {
 	for _, format := range formats {
 		value, data, err = p.getValue(data, format.attr, format.types)
 		if err == nil {
-			p.kv[format.attr] = value
+			p.kv.Store(format.attr, value)
 		}
 		// if one more item is present
 		// Then move the data pointer
@@ -354,11 +353,11 @@ func (p *GrammarParser) Parse(rdr io.Reader, handler parsers.M3u8Handler) (nByte
 func (p *GrammarParser) ParseData(data []byte, handler parsers.M3u8Handler) (nBytes int, err error) {
 	origLen := len(data)
 	p.state = readingTag
-	p.kv = make(parsers.AttrKVPairs)
 	if data[0] != '#' {
 		err = fmt.Errorf("line %v, Col %v : expected # not found", p.line, p.col)
 	}
-	data = data[1:] //position after #
+	data = data[1:]                 //position after #
+	p.kv = parsers.NewAttrKVPairs() //new value
 Loop:
 	for err == nil {
 		if len(data) <= 0 {
@@ -370,6 +369,7 @@ Loop:
 		case searchingTag:
 			if handler != nil && p.curTag != common.M3U8UNKNOWNTAG {
 				err = handler.PostRecord(p.curTag, p.kv)
+				p.kv = parsers.NewAttrKVPairs() //new value
 				if err != nil {
 					break Loop
 				}

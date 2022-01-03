@@ -6,7 +6,7 @@ import "github.com/eswarantg/m3u8reader/common"
 import "github.com/eswarantg/m3u8reader/parsers"
 
 func tokenIdToTagId(token int) common.TagId {
-	return common.TagId(token - tag_FIRST - 1)
+	return common.TagId(token - tag_FIRST)
 }
 func attrTokenToTagId(token int) common.AttrId {
 	return common.AttrId(token - token_ATTR_FIRST - 1)
@@ -18,14 +18,14 @@ func getHandler(l yyLexer) parsers.M3u8Handler {
 	var obj parsers.M3u8Handler
 	lexer, ok = l.(*Lexer)
 	if !ok {
-		panic("unknown lexer")
+		panic("\nunknown lexer")
 	}
 	obj, ok = lexer.parseResult.(parsers.M3u8Handler)
 	if !ok {
-		panic("unknown object")
+		panic("\nunknown object")
 	}
 	if obj == nil {
-		panic("nil object")
+		panic("\nnil object")
 	}
 	return obj
 }
@@ -41,7 +41,7 @@ func getHandler(l yyLexer) parsers.M3u8Handler {
     t time.Time;
     kv keyValuePair;
     val interface{}
-    kvpairs parsers.AttrKVPairs
+    kvpairs keyValuePairs
     entry accEntry
     hdlr parsers.M3u8Handler
 }
@@ -166,29 +166,29 @@ Also the m3u8.nex file needs to include the REGEX for the Attribute
 
 manifest: entries
 
-entries :  entry  { if $$ == nil { $$ = getHandler(yylex) }; $$.PostRecord($1.tag, $1.kvs); }
-        |  entries entry { if $$ == nil { $$ = getHandler(yylex) }; $$.PostRecord($2.tag, $2.kvs); }
+entries :  entry  { if $$ == nil { $$ = getHandler(yylex) }; $$.PostRecord($1.tag, $1.kvs); $1.clear("ENTRY1") }
+        |  entries entry { if $$ == nil { $$ = getHandler(yylex) }; $$.PostRecord($2.tag, $2.kvs); $2.clear("ENTRY2") }
 
 entry : tag_EXTM3U { $$.tag = tokenIdToTagId($1); } 
-      | tag_EXT_X_VERSION token_INTEGERVAL { $$.tag = tokenIdToTagId($1); $$.storeKV(common.INTUnknownAttr, $2) }
-      | tag_EXT_X_STREAM_INF ATTRLIST token_SECONDLINEVALUE { $$.tag = tokenIdToTagId($1); $2.Store(common.INTUnknownAttr, $3); $$.assignKVPS($2) }
+      | tag_EXT_X_VERSION token_INTEGERVAL { $$.tag = tokenIdToTagId($1); $$.storeKVDebug("EXT_X_VERSION",common.INTUnknownAttr, $2) }
+      | tag_EXT_X_STREAM_INF ATTRLIST token_SECONDLINEVALUE { $$.tag = tokenIdToTagId($1); $$.assignKVPS("EXT_X_STREAM_INF_1", $2); $2.clear("EXT_X_STREAM_INF_1"); $$.storeKVDebug("EXT_X_STREAM_INF_2",common.INTUnknownAttr, $3); }
       | tag_EXT_X_INDEPENDENT_SEGMENTS { $$.tag = tokenIdToTagId($1) } 
-      | tag_EXT_X_MEDIA ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS($2); } 
-      | tag_EXT_X_TARGETDURATION token_INTEGERVAL { $$.tag = tokenIdToTagId($1);  $$.storeKV(common.INTUnknownAttr,$2) } 
-      | tag_EXT_X_SERVER_CONTROL ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS($2) } 
-      | tag_EXT_X_PART_INF ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS($2) } 
-      | tag_EXT_X_MEDIA_SEQUENCE token_INTEGERVAL { $$.tag = tokenIdToTagId($1);  $$.storeKV(common.INTUnknownAttr,$2) } 
-      | tag_EXT_X_SKIP ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS($2) } 
-      | tag_EXTINF token_FLOATVAL token_COMMA token_SECONDLINEVALUE { $$.tag = tokenIdToTagId($1);  $$.storeKV(common.INTUnknownAttr,$2) ; $$.storeKV(common.M3U8Uri,$4) } 
-      | tag_EXTINF token_INTEGERVAL token_COMMA token_SECONDLINEVALUE { $$.tag = tokenIdToTagId($1);  $$.storeKV(common.INTUnknownAttr,float64($2)) ; $$.storeKV(common.M3U8Uri,$4) } 
-      | tag_EXT_X_PROGRAM_DATE_TIME token_TIMEVAL { $$.tag = tokenIdToTagId($1);  $$.storeKV(common.INTUnknownAttr,$2) } 
-      | tag_EXT_X_PART ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS($2)  } 
-      | tag_EXT_X_PRELOAD_HINT ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS($2) } 
-      | tag_EXT_X_RENDITION_REPORT ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS($2) } 
-      | tag_EXT_X_MAP ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS($2) } 
+      | tag_EXT_X_MEDIA ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS("EXT_X_MEDIA",$2); $2.clear("EXT_X_MEDIA"); } 
+      | tag_EXT_X_TARGETDURATION token_INTEGERVAL { $$.tag = tokenIdToTagId($1);  $$.storeKVDebug("EXT_X_TARGETDURATION",common.INTUnknownAttr,$2) } 
+      | tag_EXT_X_SERVER_CONTROL ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS("EXT_X_SERVER_CONTROL",$2); $2.clear("EXT_X_SERVER_CONTROL"); } 
+      | tag_EXT_X_PART_INF ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS("EXT_X_PART_INF",$2); $2.clear("EXT_X_PART_INF"); } 
+      | tag_EXT_X_MEDIA_SEQUENCE token_INTEGERVAL { $$.tag = tokenIdToTagId($1);  $$.storeKVDebug("EXT_X_MEDIA_SEQUENCE",common.INTUnknownAttr,$2) } 
+      | tag_EXT_X_SKIP ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS("EXT_X_SKIP",$2); $2.clear("EXT_X_SKIP"); } 
+      | tag_EXTINF token_FLOATVAL token_COMMA token_SECONDLINEVALUE { $$.tag = tokenIdToTagId($1);  $$.storeKVDebug("EXTINF_FL_1",common.INTUnknownAttr,$2) ; $$.storeKVDebug("EXTINF_FL_2",common.M3U8Uri,$4) } 
+      | tag_EXTINF token_INTEGERVAL token_COMMA token_SECONDLINEVALUE { $$.tag = tokenIdToTagId($1);  $$.storeKVDebug("EXTINF_INT_1",common.INTUnknownAttr,float64($2)) ; $$.storeKVDebug("EXTINF_INT_2",common.M3U8Uri,$4) } 
+      | tag_EXT_X_PROGRAM_DATE_TIME token_TIMEVAL { $$.tag = tokenIdToTagId($1); $$.storeKVDebug("EXT_X_PROGRAM_DATE_TIME",common.INTUnknownAttr,$2) } 
+      | tag_EXT_X_PART ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS("EXT_X_PART",$2); $2.clear("EXT_X_PART");   } 
+      | tag_EXT_X_PRELOAD_HINT ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS("EXT_X_PRELOAD_HINT",$2); $2.clear("EXT_X_PRELOAD_HINT");  } 
+      | tag_EXT_X_RENDITION_REPORT ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS("EXT_X_RENDITION_REPORT",$2); $2.clear("EXT_X_RENDITION_REPORT");  } 
+      | tag_EXT_X_MAP ATTRLIST { $$.tag = tokenIdToTagId($1); $$.assignKVPS("EXT_X_MAP",$2); $2.clear("EXT_X_MAP"); } 
 
-ATTRLIST : ATTRANDVAL { $$.Store($1.k, $1.v) }
-         | ATTRLIST token_COMMA ATTRANDVAL { $1.Store($3.k, $3.v); $$ = $1 } 
+ATTRLIST : ATTRANDVAL { $$.storeKVDebug("ATTRANDVAL_1",$1.k, $1.v) }
+         | ATTRLIST token_COMMA ATTRANDVAL { $1.storeKVDebug("ATTRANDVAL_2",$3.k, $3.v); $$ = $1 } 
 
 ATTRANDVAL : ATTRTOKEN VALUE { $$.k = attrTokenToTagId($1); $$.v=$2 } 
            | token_ATTRKEY VALUE { $$.k = common.AttrToAttrId[$1]; $$.v=$2 } 

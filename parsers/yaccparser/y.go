@@ -12,7 +12,7 @@ import "github.com/eswarantg/m3u8reader/common"
 import "github.com/eswarantg/m3u8reader/parsers"
 
 func tokenIdToTagId(token int) common.TagId {
-	return common.TagId(token - tag_FIRST - 1)
+	return common.TagId(token - tag_FIRST)
 }
 func attrTokenToTagId(token int) common.AttrId {
 	return common.AttrId(token - token_ATTR_FIRST - 1)
@@ -24,14 +24,14 @@ func getHandler(l yyLexer) parsers.M3u8Handler {
 	var obj parsers.M3u8Handler
 	lexer, ok = l.(*Lexer)
 	if !ok {
-		panic("unknown lexer")
+		panic("\nunknown lexer")
 	}
 	obj, ok = lexer.parseResult.(parsers.M3u8Handler)
 	if !ok {
-		panic("unknown object")
+		panic("\nunknown object")
 	}
 	if obj == nil {
-		panic("nil object")
+		panic("\nnil object")
 	}
 	return obj
 }
@@ -47,7 +47,7 @@ type yySymType struct {
 	t       time.Time
 	kv      keyValuePair
 	val     interface{}
-	kvpairs parsers.AttrKVPairs
+	kvpairs keyValuePairs
 	entry   accEntry
 	hdlr    parsers.M3u8Handler
 }
@@ -605,6 +605,7 @@ yydefault:
 				yyVAL.hdlr = getHandler(yylex)
 			}
 			yyVAL.hdlr.PostRecord(yyDollar[1].entry.tag, yyDollar[1].entry.kvs)
+			yyDollar[1].entry.clear("ENTRY1")
 		}
 	case 3:
 		yyDollar = yyS[yypt-2 : yypt+1]
@@ -614,6 +615,7 @@ yydefault:
 				yyVAL.hdlr = getHandler(yylex)
 			}
 			yyVAL.hdlr.PostRecord(yyDollar[2].entry.tag, yyDollar[2].entry.kvs)
+			yyDollar[2].entry.clear("ENTRY2")
 		}
 	case 4:
 		yyDollar = yyS[yypt-1 : yypt+1]
@@ -626,15 +628,16 @@ yydefault:
 //line m3u8.y:173
 		{
 			yyVAL.entry.tag = tokenIdToTagId(yyDollar[1].i)
-			yyVAL.entry.storeKV(common.INTUnknownAttr, yyDollar[2].i64)
+			yyVAL.entry.storeKVDebug("EXT_X_VERSION", common.INTUnknownAttr, yyDollar[2].i64)
 		}
 	case 6:
 		yyDollar = yyS[yypt-3 : yypt+1]
 //line m3u8.y:174
 		{
 			yyVAL.entry.tag = tokenIdToTagId(yyDollar[1].i)
-			yyDollar[2].kvpairs.Store(common.INTUnknownAttr, yyDollar[3].s)
-			yyVAL.entry.assignKVPS(yyDollar[2].kvpairs)
+			yyVAL.entry.assignKVPS("EXT_X_STREAM_INF_1", yyDollar[2].kvpairs)
+			yyDollar[2].kvpairs.clear("EXT_X_STREAM_INF_1")
+			yyVAL.entry.storeKVDebug("EXT_X_STREAM_INF_2", common.INTUnknownAttr, yyDollar[3].s)
 		}
 	case 7:
 		yyDollar = yyS[yypt-1 : yypt+1]
@@ -647,105 +650,113 @@ yydefault:
 //line m3u8.y:176
 		{
 			yyVAL.entry.tag = tokenIdToTagId(yyDollar[1].i)
-			yyVAL.entry.assignKVPS(yyDollar[2].kvpairs)
+			yyVAL.entry.assignKVPS("EXT_X_MEDIA", yyDollar[2].kvpairs)
+			yyDollar[2].kvpairs.clear("EXT_X_MEDIA")
 		}
 	case 9:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line m3u8.y:177
 		{
 			yyVAL.entry.tag = tokenIdToTagId(yyDollar[1].i)
-			yyVAL.entry.storeKV(common.INTUnknownAttr, yyDollar[2].i64)
+			yyVAL.entry.storeKVDebug("EXT_X_TARGETDURATION", common.INTUnknownAttr, yyDollar[2].i64)
 		}
 	case 10:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line m3u8.y:178
 		{
 			yyVAL.entry.tag = tokenIdToTagId(yyDollar[1].i)
-			yyVAL.entry.assignKVPS(yyDollar[2].kvpairs)
+			yyVAL.entry.assignKVPS("EXT_X_SERVER_CONTROL", yyDollar[2].kvpairs)
+			yyDollar[2].kvpairs.clear("EXT_X_SERVER_CONTROL")
 		}
 	case 11:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line m3u8.y:179
 		{
 			yyVAL.entry.tag = tokenIdToTagId(yyDollar[1].i)
-			yyVAL.entry.assignKVPS(yyDollar[2].kvpairs)
+			yyVAL.entry.assignKVPS("EXT_X_PART_INF", yyDollar[2].kvpairs)
+			yyDollar[2].kvpairs.clear("EXT_X_PART_INF")
 		}
 	case 12:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line m3u8.y:180
 		{
 			yyVAL.entry.tag = tokenIdToTagId(yyDollar[1].i)
-			yyVAL.entry.storeKV(common.INTUnknownAttr, yyDollar[2].i64)
+			yyVAL.entry.storeKVDebug("EXT_X_MEDIA_SEQUENCE", common.INTUnknownAttr, yyDollar[2].i64)
 		}
 	case 13:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line m3u8.y:181
 		{
 			yyVAL.entry.tag = tokenIdToTagId(yyDollar[1].i)
-			yyVAL.entry.assignKVPS(yyDollar[2].kvpairs)
+			yyVAL.entry.assignKVPS("EXT_X_SKIP", yyDollar[2].kvpairs)
+			yyDollar[2].kvpairs.clear("EXT_X_SKIP")
 		}
 	case 14:
 		yyDollar = yyS[yypt-4 : yypt+1]
 //line m3u8.y:182
 		{
 			yyVAL.entry.tag = tokenIdToTagId(yyDollar[1].i)
-			yyVAL.entry.storeKV(common.INTUnknownAttr, yyDollar[2].f)
-			yyVAL.entry.storeKV(common.M3U8Uri, yyDollar[4].s)
+			yyVAL.entry.storeKVDebug("EXTINF_FL_1", common.INTUnknownAttr, yyDollar[2].f)
+			yyVAL.entry.storeKVDebug("EXTINF_FL_2", common.M3U8Uri, yyDollar[4].s)
 		}
 	case 15:
 		yyDollar = yyS[yypt-4 : yypt+1]
 //line m3u8.y:183
 		{
 			yyVAL.entry.tag = tokenIdToTagId(yyDollar[1].i)
-			yyVAL.entry.storeKV(common.INTUnknownAttr, float64(yyDollar[2].i64))
-			yyVAL.entry.storeKV(common.M3U8Uri, yyDollar[4].s)
+			yyVAL.entry.storeKVDebug("EXTINF_INT_1", common.INTUnknownAttr, float64(yyDollar[2].i64))
+			yyVAL.entry.storeKVDebug("EXTINF_INT_2", common.M3U8Uri, yyDollar[4].s)
 		}
 	case 16:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line m3u8.y:184
 		{
 			yyVAL.entry.tag = tokenIdToTagId(yyDollar[1].i)
-			yyVAL.entry.storeKV(common.INTUnknownAttr, yyDollar[2].t)
+			yyVAL.entry.storeKVDebug("EXT_X_PROGRAM_DATE_TIME", common.INTUnknownAttr, yyDollar[2].t)
 		}
 	case 17:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line m3u8.y:185
 		{
 			yyVAL.entry.tag = tokenIdToTagId(yyDollar[1].i)
-			yyVAL.entry.assignKVPS(yyDollar[2].kvpairs)
+			yyVAL.entry.assignKVPS("EXT_X_PART", yyDollar[2].kvpairs)
+			yyDollar[2].kvpairs.clear("EXT_X_PART")
 		}
 	case 18:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line m3u8.y:186
 		{
 			yyVAL.entry.tag = tokenIdToTagId(yyDollar[1].i)
-			yyVAL.entry.assignKVPS(yyDollar[2].kvpairs)
+			yyVAL.entry.assignKVPS("EXT_X_PRELOAD_HINT", yyDollar[2].kvpairs)
+			yyDollar[2].kvpairs.clear("EXT_X_PRELOAD_HINT")
 		}
 	case 19:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line m3u8.y:187
 		{
 			yyVAL.entry.tag = tokenIdToTagId(yyDollar[1].i)
-			yyVAL.entry.assignKVPS(yyDollar[2].kvpairs)
+			yyVAL.entry.assignKVPS("EXT_X_RENDITION_REPORT", yyDollar[2].kvpairs)
+			yyDollar[2].kvpairs.clear("EXT_X_RENDITION_REPORT")
 		}
 	case 20:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line m3u8.y:188
 		{
 			yyVAL.entry.tag = tokenIdToTagId(yyDollar[1].i)
-			yyVAL.entry.assignKVPS(yyDollar[2].kvpairs)
+			yyVAL.entry.assignKVPS("EXT_X_MAP", yyDollar[2].kvpairs)
+			yyDollar[2].kvpairs.clear("EXT_X_MAP")
 		}
 	case 21:
 		yyDollar = yyS[yypt-1 : yypt+1]
 //line m3u8.y:190
 		{
-			yyVAL.kvpairs.Store(yyDollar[1].kv.k, yyDollar[1].kv.v)
+			yyVAL.kvpairs.storeKVDebug("ATTRANDVAL_1", yyDollar[1].kv.k, yyDollar[1].kv.v)
 		}
 	case 22:
 		yyDollar = yyS[yypt-3 : yypt+1]
 //line m3u8.y:191
 		{
-			yyDollar[1].kvpairs.Store(yyDollar[3].kv.k, yyDollar[3].kv.v)
+			yyDollar[1].kvpairs.storeKVDebug("ATTRANDVAL_2", yyDollar[3].kv.k, yyDollar[3].kv.v)
 			yyVAL.kvpairs = yyDollar[1].kvpairs
 		}
 	case 23:

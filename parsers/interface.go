@@ -6,25 +6,8 @@ import (
 	"github.com/eswarantg/m3u8reader/common"
 )
 
-type AttrKVPairs map[common.AttrId]interface{}
-
-func (a *AttrKVPairs) Init() {
-	*a = make(map[common.AttrId]interface{})
-}
-func (a *AttrKVPairs) Store(k common.AttrId, v interface{}) {
-	if a == nil {
-		a.Init()
-	}
-	(*a)[k] = v
-}
-func (a *AttrKVPairs) Clear() {
-	for k := range *a {
-		delete(*a, k)
-	}
-}
-
 type M3u8Handler interface {
-	PostRecord(tag common.TagId, kvpairs AttrKVPairs) error
+	PostRecord(tag common.TagId, kvpairs *AttrKVPairs) error
 }
 
 type Parser interface {

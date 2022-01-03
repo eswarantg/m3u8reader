@@ -289,7 +289,7 @@ func Test_readAttributes(t *testing.T) {
 		p.curTag = tags[i]
 		p.line = 0
 		p.col = 0
-		p.kv = map[common.AttrId]interface{}{}
+		p.kv = nil
 		remain, err := p.readingAttributes([]byte(sample))
 		if err != nil {
 			t.Logf("\n%v: %v", i, err.Error())
@@ -312,7 +312,7 @@ func Test_readAttributes(t *testing.T) {
 		for k, v := range kvs[i] {
 			var val interface{}
 			var ok bool
-			if val, ok = p.kv[k]; !ok {
+			if val = p.kv.Get(k); val != nil {
 				t.Errorf("%v : kv expected %v : not found", i, k)
 			}
 			switch ty := reflect.ValueOf(v); ty.Kind() {
@@ -383,7 +383,7 @@ func Test_readOpens(t *testing.T) {
 		p.curTag = tags[i]
 		p.line = 0
 		p.col = 0
-		p.kv = map[common.AttrId]interface{}{}
+		p.kv = nil
 		remain, err := p.readingOpens([]byte(sample))
 		if err != nil {
 			t.Logf("\n%v: %v", i, err.Error())
@@ -406,7 +406,7 @@ func Test_readOpens(t *testing.T) {
 		for k, v := range kvs[i] {
 			var val interface{}
 			var ok bool
-			if val, ok = p.kv[k]; !ok {
+			if val = p.kv.Get(k); val != nil {
 				t.Errorf("%v : kv expected %v : not found", i, k)
 			}
 			switch ty := reflect.ValueOf(v); ty.Kind() {

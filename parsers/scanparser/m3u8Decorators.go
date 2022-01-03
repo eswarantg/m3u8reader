@@ -2,6 +2,7 @@ package scanparser
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -9,197 +10,106 @@ import (
 	"github.com/eswarantg/m3u8reader/parsers"
 )
 
-func decorateM3U8ExtXVersion(kv parsers.AttrKVPairs) error {
-	if val, ok := kv[common.INTUnknownAttr]; ok {
-		newVal, err := strconv.ParseUint(val.(string), 10, 32)
-		if err != nil {
-			return fmt.Errorf("%v invalid value %v - %v", common.M3U8ExtXVersion, val, err.Error())
-		}
-		kv[common.INTUnknownAttr] = newVal
-	} else {
-		return fmt.Errorf("%v missing value", common.M3U8ExtXVersion)
-	}
-	return nil
+func decorateM3U8ExtXVersion(kv parsers.AttrKVPairs) (err error) {
+	tagId := common.M3U8ExtXVersion
+	attrs := []common.AttrId{common.INTUnknownAttr}
+	err = convertToInt64(kv, attrs, tagId, false)
+	return
 }
 
-func decorateM3U8TargetDuration(kv parsers.AttrKVPairs) error {
-	if val, ok := kv[common.INTUnknownAttr]; ok {
-		newVal, err := strconv.ParseInt(val.(string), 10, 32)
-		if err != nil {
-			return fmt.Errorf("%v invalid value %v - %v", common.M3U8TargetDuration, val, err.Error())
-		}
-		kv[common.INTUnknownAttr] = newVal
-	} else {
-		return fmt.Errorf("%v missing value", common.M3U8TargetDuration)
-	}
-	return nil
+func decorateM3U8TargetDuration(kv parsers.AttrKVPairs) (err error) {
+	tagId := common.M3U8TargetDuration
+	attrs := []common.AttrId{common.INTUnknownAttr}
+	err = convertToInt64(kv, attrs, tagId, false)
+	return
 }
 
-func decorateM3U8ExtXStreamInf(kv parsers.AttrKVPairs) error {
-	if _, ok := kv[common.INTUnknownAttr]; !ok {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtXStreamInf, "URI")
+func decorateM3U8ExtXStreamInf(kv parsers.AttrKVPairs) (err error) {
+	tagId := common.M3U8ExtXStreamInf
+	attrs := []common.AttrId{common.INTUnknownAttr}
+	err = checkExists(kv, attrs, tagId)
+	if err != nil {
+		return
 	}
-	if val, ok := kv[common.M3U8Bandwidth]; ok {
-		newVal, err := strconv.ParseInt(val.(string), 10, 32)
-		if err != nil {
-			return fmt.Errorf("%v invalid value for %v = %v - %v", common.M3U8ExtXStreamInf, "BANDWIDTH", val, err.Error())
-		}
-		kv[common.M3U8Bandwidth] = newVal
-	} else {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtXStreamInf, "BANDWIDTH")
-	}
-	return nil
+	attrs = []common.AttrId{common.M3U8Bandwidth}
+	err = convertToInt64(kv, attrs, tagId, false)
+	return err
 }
 
-func decorateM3U8ExtXMedia(kv parsers.AttrKVPairs) error {
-	if _, ok := kv[common.M3U8Uri]; !ok {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtXStreamInf, "URI")
+func decorateM3U8ExtXMedia(kv parsers.AttrKVPairs) (err error) {
+	tagId := common.M3U8ExtXMedia
+	attrs := []common.AttrId{
+		common.M3U8Uri, common.M3U8Type,
+		common.M3U8Language, common.M3U8GroupId,
 	}
-	if _, ok := kv[common.M3U8Type]; !ok {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtXStreamInf, "TYPE")
-	}
-	if _, ok := kv[common.M3U8Language]; !ok {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtXStreamInf, "LANGUAGE")
-	}
-	if _, ok := kv[common.M3U8GroupId]; !ok {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtXStreamInf, "GROUP-ID")
-	}
-	return nil
+	err = checkExists(kv, attrs, tagId)
+	return
 }
 
-func decorateM3U8ExtInf(kv parsers.AttrKVPairs) error {
-	if _, ok := kv[common.M3U8Uri]; !ok {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtInf, "URI")
+func decorateM3U8ExtInf(kv parsers.AttrKVPairs) (err error) {
+	tagId := common.M3U8ExtInf
+	attrs := []common.AttrId{common.M3U8Uri}
+	err = checkExists(kv, attrs, tagId)
+	if err != nil {
+		return
 	}
-	if val, ok := kv[common.INTUnknownAttr]; ok {
-		newVal, err := strconv.ParseFloat(val.(string), 32)
-		if err != nil {
-			return fmt.Errorf("%v invalid value %v - %v", common.M3U8ExtInf, val, err.Error())
-		}
-		kv[common.INTUnknownAttr] = newVal
-	} else {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtInf, common.INTUnknownAttr)
-	}
-	return nil
+	attrs = []common.AttrId{common.INTUnknownAttr}
+	err = convertToFloat64(kv, attrs, tagId, false)
+	return err
 }
 
-func decorateM3U8ExtXIProgramDateTime(kv parsers.AttrKVPairs) error {
-	if val, ok := kv[common.INTUnknownAttr]; ok {
-		newVal, err := time.Parse(time.RFC3339Nano, val.(string))
-		if err != nil {
-			return fmt.Errorf("%v invalid value %v - %v", common.M3U8ExtXIProgramDateTime, val, err.Error())
-		}
-		kv[common.INTUnknownAttr] = newVal
-	} else {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtXIProgramDateTime, "URI")
-	}
-	return nil
+func decorateM3U8ExtXIProgramDateTime(kv parsers.AttrKVPairs) (err error) {
+	tagId := common.M3U8ExtXIProgramDateTime
+	attrs := []common.AttrId{common.INTUnknownAttr}
+	err = convertToTime(kv, attrs, tagId, false)
+	return
 }
 
-func decorateM3U8ExtXPart(kv parsers.AttrKVPairs) error {
-	if _, ok := kv[common.M3U8Uri]; !ok {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtXPart, "URI")
+func decorateM3U8ExtXPart(kv parsers.AttrKVPairs) (err error) {
+	tagId := common.M3U8ExtXPart
+	attrs := []common.AttrId{common.M3U8Uri}
+	err = checkExists(kv, attrs, tagId)
+	if err != nil {
+		return
 	}
-	if val, ok := kv[common.M3U8Duration]; ok {
-		newVal, err := strconv.ParseFloat(val.(string), 32)
-		if err != nil {
-			return fmt.Errorf("%v invalid value for %v = %v - %v", common.M3U8ExtXPart, "DURATION", val, err.Error())
-		}
-		kv[common.M3U8Duration] = newVal
-	} else {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtXPart, "DURATION")
-	}
-	return nil
+	attrs = []common.AttrId{common.M3U8Duration}
+	err = convertToFloat64(kv, attrs, tagId, false)
+	return
 }
 
-func decorateM3U8ExtXMediaSequence(kv parsers.AttrKVPairs) error {
-	if val, ok := kv[common.INTUnknownAttr]; ok {
-		newVal, err := strconv.ParseInt(val.(string), 10, 64)
-		if err != nil {
-			return fmt.Errorf("%v invalid value for %v = %v - %v", common.M3U8ExtXMediaSequence, common.INTUnknownAttr, val, err.Error())
-		}
-		kv[common.INTUnknownAttr] = newVal
-	} else {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtXMediaSequence, common.INTUnknownAttr)
-	}
-	if val, ok := kv[common.M3U8PartTarget]; ok {
-		newVal, err := strconv.ParseFloat(val.(string), 64)
-		if err != nil {
-			return fmt.Errorf("%v invalid value for %v = %v - %v", common.M3U8ExtXMediaSequence, "PART-TARGET", val, err.Error())
-		}
-		kv[common.M3U8PartTarget] = newVal
-	} // else failure not required it is optional
-	return nil
+func decorateM3U8ExtXMediaSequence(kv parsers.AttrKVPairs) (err error) {
+	tagId := common.M3U8ExtXMediaSequence
+	attrs := []common.AttrId{common.INTUnknownAttr}
+	err = convertToInt64(kv, attrs, tagId, false)
+	return
 }
 
-func decorateM3U8ExtXPartInf(kv parsers.AttrKVPairs) error {
-	if val, ok := kv[common.M3U8PartTarget]; ok {
-		newVal, err := strconv.ParseFloat(val.(string), 64)
-		if err != nil {
-			return fmt.Errorf("%v invalid value for %v = %v - %v", common.M3U8ExtXPartInf, "PART-TARGET", val, err.Error())
-		}
-		kv[common.M3U8PartTarget] = newVal
-	} else {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtXPartInf, "PART-TARGET")
-	}
-	return nil
+func decorateM3U8ExtXPartInf(kv parsers.AttrKVPairs) (err error) {
+	tagId := common.M3U8ExtXPartInf
+	attrs := []common.AttrId{common.M3U8PartTarget}
+	err = convertToFloat64(kv, attrs, tagId, true)
+	return
 }
 
-func decorateM3U8ExtXRenditionReport(kv parsers.AttrKVPairs) error {
-	if val, ok := kv[common.M3U8LastMsn]; ok {
-		newVal, err := strconv.ParseUint(val.(string), 10, 64)
-		if err != nil {
-			return fmt.Errorf("%v invalid value for %v = %v - %v", common.M3U8ExtInf, "LAST-MSN", val, err.Error())
-		}
-		kv[common.M3U8LastMsn] = newVal
-	} else {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtXPart, "LAST-MSN")
-	}
-	if val, ok := kv[common.M3U8LastPart]; ok {
-		newVal, err := strconv.ParseUint(val.(string), 10, 64)
-		if err != nil {
-			return fmt.Errorf("%v invalid value for %v = %v - %v", common.M3U8ExtInf, "LAST-PART", val, err.Error())
-		}
-		kv[common.M3U8LastPart] = newVal
-	} else {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtXPart, "LAST-PART")
-	}
-	return nil
+func decorateM3U8ExtXRenditionReport(kv parsers.AttrKVPairs) (err error) {
+	tagId := common.M3U8ExtXRenditionReport
+	attrs := []common.AttrId{common.M3U8LastMsn, common.M3U8LastPart}
+	err = convertToInt64(kv, attrs, tagId, false)
+	return
 }
 
-func decorateM3U8ExtXServerControl(kv parsers.AttrKVPairs) error {
-	if val, ok := kv[common.M3U8CanSkipUntil]; ok {
-		newVal, err := strconv.ParseFloat(val.(string), 64)
-		if err != nil {
-			return fmt.Errorf("%v invalid value for %v = %v - %v", common.M3U8ExtXServerControl, "CAN-SKIP-UNTIL", val, err.Error())
-		}
-		kv[common.M3U8CanSkipUntil] = newVal
-	} else {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtXServerControl, "CAN-SKIP-UNTIL")
-	}
-	if val, ok := kv[common.M3U8PartHoldBack]; ok {
-		newVal, err := strconv.ParseFloat(val.(string), 64)
-		if err != nil {
-			return fmt.Errorf("%v invalid value for %v = %v - %v", common.M3U8ExtXServerControl, "PART-HOLD-BACK", val, err.Error())
-		}
-		kv[common.M3U8PartHoldBack] = newVal
-	} else {
-		return fmt.Errorf("%v missing %v value", common.M3U8ExtXServerControl, "PART-HOLD-BACK")
-	}
-	return nil
+func decorateM3U8ExtXServerControl(kv parsers.AttrKVPairs) (err error) {
+	tagId := common.M3U8ExtXServerControl
+	attrs := []common.AttrId{common.M3U8CanSkipUntil, common.M3U8PartHoldBack}
+	err = convertToFloat64(kv, attrs, tagId, false)
+	return
 }
 
-func decorateM3U8XSkip(kv parsers.AttrKVPairs) error {
-	if val, ok := kv[common.M3U8SkippedSegments]; ok {
-		newVal, err := strconv.ParseInt(val.(string), 10, 64)
-		if err != nil {
-			return fmt.Errorf("%v invalid value for %v = %v - %v", common.M3U8XSkip, "SKIPPED-SEGMENTS", val, err.Error())
-		}
-		kv[common.M3U8SkippedSegments] = newVal
-	} else {
-		return fmt.Errorf("%v missing %v value", common.M3U8XSkip, "SKIPPED-SEGMENTS")
-	}
-	return nil
+func decorateM3U8XSkip(kv parsers.AttrKVPairs) (err error) {
+	tagId := common.M3U8XSkip
+	attrs := []common.AttrId{common.M3U8SkippedSegments}
+	err = convertToInt64(kv, attrs, tagId, false)
+	return
 }
 
 var decorators = map[common.TagId]func(kv parsers.AttrKVPairs) error{
@@ -222,4 +132,70 @@ func decorateEntry(tag common.TagId, kv parsers.AttrKVPairs) (err error) {
 		err = decorateFn(kv)
 	}
 	return
+}
+
+func checkExists(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId common.TagId) error {
+	for _, attr := range attrIds {
+		if val := kv.Get(attr); val == nil {
+			return fmt.Errorf("%v missing %v value", tagId, common.AttrNames[attr])
+		}
+	}
+	return nil
+}
+func convertToFloat64(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId common.TagId, optional bool) error {
+	for _, attrId := range attrIds {
+		if val := kv.Get(attrId); val != nil {
+			v, ok := val.(string)
+			if !ok {
+				panic(fmt.Sprintf("\nconvertToFloat64 %v:%v is %v not string", common.TagNames[tagId], common.AttrNames[attrId], reflect.TypeOf(val).Kind()))
+			}
+			newVal, err := strconv.ParseFloat(v, 64)
+			if err != nil {
+				return fmt.Errorf("%v invalid Float value %v=\"%v\" - %v", common.TagNames[tagId],
+					common.AttrNames[attrId], val, err.Error())
+			}
+			kv.Store(attrId, newVal)
+		} else if !optional {
+			return fmt.Errorf("missing Float value %v[%v]", common.TagNames[tagId], common.AttrNames[attrId])
+		}
+	}
+	return nil
+}
+func convertToInt64(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId common.TagId, optional bool) error {
+	for _, attrId := range attrIds {
+		if val := kv.Get(attrId); val != nil {
+			v, ok := val.(string)
+			if !ok {
+				panic(fmt.Sprintf("\nconvertToInt64 %v:%v is %v not string", common.TagNames[tagId], common.AttrNames[attrId], reflect.TypeOf(val).Kind()))
+			}
+			newVal, err := strconv.ParseInt(v, 10, 64)
+			if err != nil {
+				return fmt.Errorf("%v invalid Intvalue %v=\"%v\" - %v", common.TagNames[tagId],
+					common.AttrNames[attrId], val, err.Error())
+			}
+			kv.Store(attrId, newVal)
+		} else if !optional {
+			return fmt.Errorf("missing Int value %v[%v", common.TagNames[tagId], common.AttrNames[attrId])
+		}
+	}
+	return nil
+}
+func convertToTime(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId common.TagId, optional bool) error {
+	for _, attrId := range attrIds {
+		if val := kv.Get(attrId); val != nil {
+			v, ok := val.(string)
+			if !ok {
+				panic(fmt.Sprintf("\nconvertToTime %v:%v is %v not string", common.TagNames[tagId], common.AttrNames[attrId], reflect.TypeOf(val).Kind()))
+			}
+			newVal, err := time.Parse(time.RFC3339Nano, v)
+			if err != nil {
+				return fmt.Errorf("%v invalid Time value %v=\"%v\" - %v", common.TagNames[tagId],
+					common.AttrNames[attrId], val, err.Error())
+			}
+			kv.Store(attrId, newVal)
+		} else if !optional {
+			return fmt.Errorf("missing Time value %v[%v", common.TagNames[tagId], common.AttrNames[attrId])
+		}
+	}
+	return nil
 }

@@ -13,7 +13,7 @@ type YaccParser struct {
 	extHander parsers.M3u8Handler
 }
 
-func (y *YaccParser) PostRecord(tag common.TagId, kvpairs parsers.AttrKVPairs) error {
+func (y *YaccParser) PostRecord(tag common.TagId, kvpairs *parsers.AttrKVPairs) error {
 	return y.extHander.PostRecord(tag, kvpairs)
 }
 

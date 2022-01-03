@@ -12,15 +12,20 @@ import (
 	"github.com/eswarantg/m3u8reader/parsers"
 	grammarparser "github.com/eswarantg/m3u8reader/parsers/grammarParser"
 	"github.com/eswarantg/m3u8reader/parsers/scanparser"
+	"github.com/eswarantg/m3u8reader/parsers/yaccparser"
 )
 
 type TestHandler struct {
 }
 
-func (TestHandler) PostRecord(tag common.TagId, kvpairs parsers.AttrKVPairs) error {
+func (TestHandler) PostRecord(tag common.TagId, kvpairs *parsers.AttrKVPairs) error {
 	fmt.Printf("\n%v(%v)", common.TagNames[tag], tag)
-	for k, v := range kvpairs {
-		fmt.Printf("\n\t%v(%v)=%v", common.AttrNames[k], k, v)
+	if kvpairs != nil {
+		for k, v := range kvpairs.Map() {
+			fmt.Printf("\n\t%v(%v)=%v", common.AttrNames[k], k, v)
+		}
+		kvpairs.Done()
+		fmt.Printf("\n")
 	}
 	return nil
 }
@@ -28,8 +33,11 @@ func (TestHandler) PostRecord(tag common.TagId, kvpairs parsers.AttrKVPairs) err
 type EmptyHandler struct {
 }
 
-func (EmptyHandler) PostRecord(tag common.TagId, kvpairs parsers.AttrKVPairs) error {
+func (EmptyHandler) PostRecord(tag common.TagId, kvpairs *parsers.AttrKVPairs) error {
 	//fmt.Printf("\n%v %v", tag, kvpairs)
+	if kvpairs != nil {
+		kvpairs.Done()
+	}
 	return nil
 }
 
@@ -54,14 +62,16 @@ func Test_MediaM3u8(t *testing.T) {
 		if err != nil {
 			continue
 		}
-		fmt.Printf("\n****** ScanParser1 ******")
-		hdlr = TestHandler{}
-		scanner1 := scanparser.ScanParser1{}
-		_, err = scanner1.ParseData(data, hdlr)
-		if err != nil {
-			t.Errorf("Error : %v", err)
-			continue
-		}
+		/*
+			fmt.Printf("\n****** ScanParser1 ******")
+			hdlr = TestHandler{}
+			scanner1 := scanparser.ScanParser1{}
+			_, err = scanner1.ParseData(data, hdlr)
+			if err != nil {
+				t.Errorf("Error : %v", err)
+				continue
+			}
+		*/
 		/*
 			fmt.Printf("\n****** ScanParser2 ******")
 			hdlr = TestHandler{}
@@ -71,24 +81,25 @@ func Test_MediaM3u8(t *testing.T) {
 				t.Errorf("Error : %v", err)
 				continue
 			}
-			fmt.Printf("****** YaccParser ******")
+		*/
+		fmt.Printf("****** YaccParser ******")
+		hdlr = TestHandler{}
+		scanner3 := yaccparser.YaccParser{}
+		_, err = scanner3.ParseData(data, hdlr)
+		if err != nil {
+			t.Errorf("Error : %v", err)
+			continue
+		}
+		/*
+			fmt.Printf("\n****** GrammarParser ******")
 			hdlr = TestHandler{}
-			scanner3 := yaccparser.YaccParser{}
-			_, err = scanner3.ParseData(data, hdlr)
+			scanner4 := grammarparser.GrammarParser{}
+			_, err = scanner4.ParseData(data, hdlr)
 			if err != nil {
 				t.Errorf("Error : %v", err)
 				continue
 			}
 		*/
-		fmt.Printf("\n****** GrammarParser ******")
-		hdlr = TestHandler{}
-		scanner4 := grammarparser.GrammarParser{}
-		_, err = scanner4.ParseData(data, hdlr)
-		if err != nil {
-			t.Errorf("Error : %v", err)
-			continue
-		}
-
 	}
 }
 
@@ -111,6 +122,8 @@ func Test_MasterM3u8(t *testing.T) {
 				t.Errorf("Error : %v", err)
 				continue
 			}
+		*/
+		/*
 			hdlr = TestHandler{}
 			scanner2 := scanparser.ScanParser2{}
 			f.Seek(0, io.SeekStart)
@@ -119,23 +132,25 @@ func Test_MasterM3u8(t *testing.T) {
 				t.Errorf("Error : %v", err)
 				continue
 			}
+		*/
+		hdlr = TestHandler{}
+		scanner3 := yaccparser.YaccParser{}
+		f.Seek(0, io.SeekStart)
+		_, err = scanner3.Parse(f, hdlr)
+		if err != nil {
+			t.Errorf("Error : %v", err)
+			continue
+		}
+		/*
 			hdlr = TestHandler{}
-			scanner3 := yaccparser.YaccParser{}
+			scanner4 := grammarparser.GrammarParser{}
 			f.Seek(0, io.SeekStart)
-			_, err = scanner3.Parse(f, hdlr)
+			_, err = scanner4.Parse(f, hdlr)
 			if err != nil {
 				t.Errorf("Error : %v", err)
 				continue
 			}
 		*/
-		hdlr = TestHandler{}
-		scanner4 := grammarparser.GrammarParser{}
-		f.Seek(0, io.SeekStart)
-		_, err = scanner4.Parse(f, hdlr)
-		if err != nil {
-			t.Errorf("Error : %v", err)
-			continue
-		}
 	}
 }
 
@@ -183,6 +198,7 @@ func BenchmarkParse2(b *testing.B) {
 		}
 	}
 }
+*/
 
 func BenchmarkParse3(b *testing.B) {
 	f, err := os.Open("../test/sub.m3u8")
@@ -205,7 +221,6 @@ func BenchmarkParse3(b *testing.B) {
 		}
 	}
 }
-*/
 
 func BenchmarkParse4(b *testing.B) {
 	f, err := os.Open("../test/sub.m3u8")
