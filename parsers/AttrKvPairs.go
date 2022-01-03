@@ -107,18 +107,20 @@ func (a *AttrKVPairs) GetFloat64(t common.TagId, k common.AttrId) (ret float64, 
 	var vInt int64
 	val := a.Get(k)
 	if val == nil {
-		err = fmt.Errorf("%v not found", common.AttrNames[k])
+		err = fmt.Errorf("%v:%v not found", common.TagNames[t], common.AttrNames[k])
 		return
 	}
 	vFloat, ok = val.(float64)
 	if ok {
 		ret = vFloat
+		return
 	}
 	vInt, ok = val.(int64)
 	if ok {
 		ret = float64(vInt)
+		return
 	}
-	err = fmt.Errorf("%v expected float64 found of data type %v.%v", common.TagNames[t], common.AttrNames[k], reflect.ValueOf(val).Kind())
+	err = fmt.Errorf("%v:%v expected float64 found of data type %v", common.TagNames[t], common.AttrNames[k], reflect.ValueOf(val).Kind())
 	return
 }
 
@@ -127,14 +129,15 @@ func (a *AttrKVPairs) GetInt64(t common.TagId, k common.AttrId) (ret int64, err 
 	var vInt int64
 	val := a.Get(k)
 	if val == nil {
-		err = fmt.Errorf("%v not found", common.AttrNames[k])
+		err = fmt.Errorf("%v:%v not found", common.TagNames[t], common.AttrNames[k])
 		return
 	}
 	vInt, ok = val.(int64)
 	if ok {
 		ret = vInt
+		return
 	}
-	err = fmt.Errorf("%v expected int64 found of data type %v:%v", common.TagNames[t], common.AttrNames[k], reflect.ValueOf(val).Kind())
+	err = fmt.Errorf("%v:%v expected int64 found of data type %v", common.TagNames[t], common.AttrNames[k], reflect.ValueOf(val).Kind())
 	return
 }
 
@@ -143,14 +146,15 @@ func (a *AttrKVPairs) GetTime(t common.TagId, k common.AttrId) (ret time.Time, e
 	var vTime time.Time
 	val := a.Get(k)
 	if val == nil {
-		err = fmt.Errorf("%v not found", common.AttrNames[k])
+		err = fmt.Errorf("%v:%v not found", common.TagNames[t], common.AttrNames[k])
 		return
 	}
 	vTime, ok = val.(time.Time)
 	if ok {
 		ret = vTime
+		return
 	}
-	err = fmt.Errorf("%v expected time.Time found of data type %v:%v", common.TagNames[t], common.AttrNames[k], reflect.ValueOf(val).Kind())
+	err = fmt.Errorf("%v:%v expected time.Time found of data type %v", common.TagNames[t], common.AttrNames[k], reflect.ValueOf(val).Kind())
 	return
 }
 
@@ -159,13 +163,14 @@ func (a *AttrKVPairs) GetString(t common.TagId, k common.AttrId) (ret string, er
 	var vStr string
 	val := a.Get(k)
 	if val == nil {
-		err = fmt.Errorf("%v not found", common.AttrNames[k])
+		err = fmt.Errorf("%v:%v not found", common.TagNames[t], common.AttrNames[k])
 		return
 	}
 	vStr, ok = val.(string)
 	if ok {
 		ret = vStr
+		return
 	}
-	err = fmt.Errorf("%v expected time.Time found of data type %v:%v", common.TagNames[t], common.AttrNames[k], reflect.ValueOf(val).Kind())
+	err = fmt.Errorf("%v:%v expected time.Time found of data type %v", common.TagNames[t], common.AttrNames[k], reflect.ValueOf(val).Kind())
 	return
 }
