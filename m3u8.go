@@ -181,7 +181,7 @@ func (m *M3U8) PostRecord(tag common.TagId, kvpairs *parsers.AttrKVPairs) error 
 	if kvpairs == nil {
 		kvpairs = parsers.AttrKVPairsPool.Get().(*parsers.AttrKVPairs)
 	}
-	entry := M3U8Entry{Tag: tag, Values: *kvpairs}
+	entry := M3U8Entry{Tag: tag, Values: kvpairs}
 	return m.postRecordEntry(entry)
 }
 

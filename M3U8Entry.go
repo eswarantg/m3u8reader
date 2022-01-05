@@ -9,15 +9,16 @@ import (
 
 type M3U8Entry struct {
 	Tag    common.TagId
-	Values parsers.AttrKVPairs
+	Values *parsers.AttrKVPairs
 }
 
 func (m *M3U8Entry) Done() {
-	(&m.Values).Done()
+	m.Values.Done()
+	m.Values = nil
 }
 
 func (m *M3U8Entry) StoreKV(k common.AttrId, v interface{}) {
-	(&m.Values).Store(k, v)
+	m.Values.Store(k, v)
 }
 
 func (m *M3U8Entry) String() string {
