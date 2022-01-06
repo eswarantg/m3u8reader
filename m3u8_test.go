@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/eswarantg/m3u8reader"
+	"github.com/eswarantg/m3u8reader/parsers"
 )
 
 func Test_M3u81(t *testing.T) {
@@ -214,7 +215,58 @@ func Test_ProgramTime(t *testing.T) {
 	}
 }
 
-func Benchmark_Read1(b *testing.B) {
+func Benchmark_Read1a(b *testing.B) {
+	b.StopTimer()
+	f, err := os.Open("test/sub.m3u8")
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	f.Close()
+	b.StartTimer()
+	rdr := bytes.NewReader(data)
+	for n := 0; n < b.N; n++ {
+		manifest := m3u8reader.M3U8{}
+		manifest.SetParserOption(m3u8reader.M3U8ParserScanner1)
+		_, err = manifest.Read(rdr)
+		if err != nil {
+			b.Errorf(err.Error())
+			return
+		}
+		manifest.Done()
+	}
+}
+
+func Benchmark_Read1b(b *testing.B) {
+	b.StopTimer()
+	f, err := os.Open("test/sub.m3u8")
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	f.Close()
+	b.StartTimer()
+	for n := 0; n < b.N; n++ {
+		manifest := m3u8reader.M3U8{}
+		manifest.SetParserOption(m3u8reader.M3U8ParserScanner1)
+		_, err = manifest.ParseData(data)
+		if err != nil {
+			b.Errorf(err.Error())
+			return
+		}
+		manifest.Done()
+	}
+}
+
+func Benchmark_Read1a_sync(b *testing.B) {
+	b.StopTimer()
+	parsers.AttrKVPairsSyncPool = true
 	f, err := os.Open("test/sub.m3u8")
 	if err != nil {
 		b.Errorf("Error : %v", err)
@@ -225,10 +277,36 @@ func Benchmark_Read1(b *testing.B) {
 	}
 	f.Close()
 	rdr := bytes.NewReader(data)
+	b.StartTimer()
 	for n := 0; n < b.N; n++ {
 		manifest := m3u8reader.M3U8{}
 		manifest.SetParserOption(m3u8reader.M3U8ParserScanner1)
 		_, err = manifest.Read(rdr)
+		if err != nil {
+			b.Errorf(err.Error())
+			return
+		}
+		manifest.Done()
+	}
+}
+
+func Benchmark_Read1b_sync(b *testing.B) {
+	b.StopTimer()
+	parsers.AttrKVPairsSyncPool = true
+	f, err := os.Open("test/sub.m3u8")
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	f.Close()
+	b.StartTimer()
+	for n := 0; n < b.N; n++ {
+		manifest := m3u8reader.M3U8{}
+		manifest.SetParserOption(m3u8reader.M3U8ParserScanner1)
+		_, err = manifest.ParseData(data)
 		if err != nil {
 			b.Errorf(err.Error())
 			return
@@ -261,8 +339,8 @@ func Benchmark_Read2(b *testing.B) {
 	}
 }
 */
-
-func Benchmark_Read3(b *testing.B) {
+/*
+func Benchmark_Read3a(b *testing.B) {
 	f, err := os.Open("test/sub.m3u8")
 	if err != nil {
 		b.Errorf("Error : %v", err)
@@ -272,8 +350,8 @@ func Benchmark_Read3(b *testing.B) {
 		b.Errorf("Error : %v", err)
 	}
 	f.Close()
-	rdr := bytes.NewReader(data)
 	for n := 0; n < b.N; n++ {
+		rdr := bytes.NewReader(data)
 		manifest := m3u8reader.M3U8{}
 		manifest.SetParserOption(m3u8reader.M3U8ParserYacc)
 		_, err = manifest.Read(rdr)
@@ -284,8 +362,57 @@ func Benchmark_Read3(b *testing.B) {
 		manifest.Done()
 	}
 }
+*/
+/*
+func Benchmark_Read3b(b *testing.B) {
+	f, err := os.Open("test/sub.m3u8")
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	f.Close()
+	for n := 0; n < b.N; n++ {
+		manifest := m3u8reader.M3U8{}
+		manifest.SetParserOption(m3u8reader.M3U8ParserYacc)
+		_, err = manifest.ParseData(data)
+		if err != nil {
+			b.Errorf(err.Error())
+			return
+		}
+		manifest.Done()
+	}
+}
+*/
+/*
+func Benchmark_Read4a(b *testing.B) {
+	f, err := os.Open("test/sub.m3u8")
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	f.Close()
+	for n := 0; n < b.N; n++ {
+		rdr := bytes.NewReader(data)
+		manifest := m3u8reader.M3U8{}
 
-func Benchmark_Read4(b *testing.B) {
+		manifest.SetParserOption(m3u8reader.M3U8ParserGrammar)
+		_, err = manifest.Read(rdr)
+		if err != nil {
+			b.Errorf(err.Error())
+			return
+		}
+		manifest.Done()
+	}
+}
+*/
+/*
+func Benchmark_Read4b(b *testing.B) {
 	f, err := os.Open("test/sub.m3u8")
 	if err != nil {
 		b.Errorf("Error : %v", err)
@@ -306,3 +433,4 @@ func Benchmark_Read4(b *testing.B) {
 		manifest.Done()
 	}
 }
+*/

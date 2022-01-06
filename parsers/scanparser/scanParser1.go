@@ -161,13 +161,13 @@ func parseM3U8(src io.Reader, handler parsers.M3u8Handler) (nBytes int, err erro
 	//Post Record Entry - Start
 	var kvpairs *parsers.AttrKVPairs
 	kvpairs = parsers.NewAttrKVPairs() //initalize
-	lastToken := ""
-	key := ""
-	tag := ""
+	var lastToken []byte
+	var key []byte
+	var tag []byte
 	tagId := common.M3U8UNKNOWNTAG
 	postRecordFn := func() (err error) {
-		if len(tag) > 0 {
-			if len(key) > 0 {
+		if tag != nil {
+			if key != nil {
 				newkey := common.INTUnknownAttr
 				if kvpairs.Exists(common.INTUnknownAttr) {
 					//Already present
@@ -178,16 +178,16 @@ func parseM3U8(src io.Reader, handler parsers.M3u8Handler) (nBytes int, err erro
 						//panic(fmt.Sprintf("Duplicate INTUnknownAttr for %v required.", tag))
 					}
 				}
-				kvpairs.Store(newkey, key)
-				key = ""
+				kvpairs.Store(newkey, string(key))
+				key = nil
 			}
 			//fmt.Printf("\npostRecordFn %v %v", tag, kvpairs)
-			tagId, ok := common.TagToTagId[tag]
+			tagId, ok := common.TagToTagId[string(tag)]
 			if ok {
 				err = handler.PostRecord(tagId, kvpairs)
 				kvpairs = parsers.NewAttrKVPairs() //use new one next time
 			}
-			tag = ""
+			tag = nil
 		}
 		return
 	}
@@ -195,56 +195,56 @@ func parseM3U8(src io.Reader, handler parsers.M3u8Handler) (nBytes int, err erro
 
 	for s.Scan() {
 		//fmt.Printf("\nToken %v : %v", tokenCount, s.Text())
-		curToken := s.Text()
+		curToken := s.Bytes()
 		if len(curToken) == 0 {
 			continue
 		}
-		if curToken == "#" {
+		if bytes.Equal(curToken, []byte{'#'}) {
 			err = postRecordFn()
 			if err != nil {
 				break
 			}
 		} else {
-			switch lastToken {
-			case "#":
-				if curToken == "\n" {
+			switch lastToken[0] {
+			case '#':
+				if curToken[0] == '\n' {
 					continue //skip new line with only #
 				}
 				var ok bool
 				tag = curToken
-				tagId, ok = common.TagToTagId[tag]
+				tagId, ok = common.TagToTagId[string(tag)]
 				if !ok {
-					panic(fmt.Sprintf("\nUnknown Tag : \"%v\"", tag))
+					panic(fmt.Sprintf("\nUnknown Tag : \"%v\"", string(tag)))
 				}
-			case ",", ":":
-				if len(key) > 0 {
-					kvpairs.Store(common.INTUnknownAttr, key)
-					key = ""
+			case ',', ':':
+				if key != nil {
+					kvpairs.Store(common.INTUnknownAttr, string(key))
+					key = nil
 				}
-				if curToken != "\n" {
+				if curToken[0] != '\n' {
 					key = curToken
 				}
-			case "=":
-				attrId, ok := common.AttrToAttrId[key]
+			case '=':
+				attrId, ok := common.AttrToAttrId[string(key)]
 				if ok {
-					kvpairs.Store(attrId, curToken)
+					kvpairs.Store(attrId, string(curToken))
 				}
-				key = ""
-			case "\n":
-				if curToken != "\n" {
-					if len(key) > 0 {
-						attrId, ok := common.AttrToAttrId[key]
+				key = nil
+			case '\n':
+				if curToken[0] != '\n' {
+					if key != nil {
+						attrId, ok := common.AttrToAttrId[string(key)]
 						if ok {
-							kvpairs.Store(attrId, curToken)
+							kvpairs.Store(attrId, string(curToken))
 						}
-						key = ""
+						key = nil
 					} else {
 						key = curToken
 					}
 				}
 			}
 		}
-		lastToken = s.Text()
+		lastToken = s.Bytes()
 	}
 	if err == nil {
 		err = postRecordFn()
