@@ -62,16 +62,26 @@ func Test_MediaM3u8(t *testing.T) {
 		if err != nil {
 			continue
 		}
-		/*
-			fmt.Printf("\n****** ScanParser1 ******")
-			hdlr = TestHandler{}
-			scanner1 := scanparser.ScanParser1{}
-			_, err = scanner1.ParseData(data, hdlr)
-			if err != nil {
-				t.Errorf("Error : %v", err)
-				continue
-			}
-		*/
+
+		fmt.Printf("\n****** ScanParser1 - w/o sync ******")
+		hdlr = TestHandler{}
+		parsers.AttrKVPairsSyncPool = false
+		scanner1 := scanparser.ScanParser1{}
+		_, err = scanner1.ParseData(data, hdlr)
+		if err != nil {
+			t.Errorf("Error : %v", err)
+			continue
+		}
+
+		fmt.Printf("\n****** ScanParser1 - w/ sync ******")
+		hdlr = TestHandler{}
+		parsers.AttrKVPairsSyncPool = true
+		_, err = scanner1.ParseData(data, hdlr)
+		if err != nil {
+			t.Errorf("Error : %v", err)
+			continue
+		}
+
 		/*
 			fmt.Printf("\n****** ScanParser2 ******")
 			hdlr = TestHandler{}
@@ -82,14 +92,16 @@ func Test_MediaM3u8(t *testing.T) {
 				continue
 			}
 		*/
-		fmt.Printf("****** YaccParser ******")
-		hdlr = TestHandler{}
-		scanner3 := yaccparser.YaccParser{}
-		_, err = scanner3.ParseData(data, hdlr)
-		if err != nil {
-			t.Errorf("Error : %v", err)
-			continue
-		}
+		/*
+			fmt.Printf("****** YaccParser ******")
+			hdlr = TestHandler{}
+			scanner3 := yaccparser.YaccParser{}
+			_, err = scanner3.ParseData(data, hdlr)
+			if err != nil {
+				t.Errorf("Error : %v", err)
+				continue
+			}
+		*/
 		/*
 			fmt.Printf("\n****** GrammarParser ******")
 			hdlr = TestHandler{}
@@ -114,15 +126,26 @@ func Test_MasterM3u8(t *testing.T) {
 			continue
 		}
 		defer f.Close()
-		/*
-			hdlr := TestHandler{}
-			scanner1 := scanparser.ScanParser1{}
-			_, err = scanner1.Parse(f, hdlr)
-			if err != nil {
-				t.Errorf("Error : %v", err)
-				continue
-			}
-		*/
+
+		fmt.Printf("\n****** ScanParser1 - w/o sync ******")
+		hdlr = TestHandler{}
+		parsers.AttrKVPairsSyncPool = false
+		scanner1 := scanparser.ScanParser1{}
+		_, err = scanner1.Parse(f, hdlr)
+		if err != nil {
+			t.Errorf("Error : %v", err)
+			continue
+		}
+
+		fmt.Printf("\n****** ScanParser1 - w/ sync ******")
+		hdlr = TestHandler{}
+		parsers.AttrKVPairsSyncPool = true
+		_, err = scanner1.Parse(f, hdlr)
+		if err != nil {
+			t.Errorf("Error : %v", err)
+			continue
+		}
+
 		/*
 			hdlr = TestHandler{}
 			scanner2 := scanparser.ScanParser2{}
@@ -133,14 +156,16 @@ func Test_MasterM3u8(t *testing.T) {
 				continue
 			}
 		*/
-		hdlr = TestHandler{}
-		scanner3 := yaccparser.YaccParser{}
-		f.Seek(0, io.SeekStart)
-		_, err = scanner3.Parse(f, hdlr)
-		if err != nil {
-			t.Errorf("Error : %v", err)
-			continue
-		}
+		/*
+			hdlr = TestHandler{}
+			scanner3 := yaccparser.YaccParser{}
+			f.Seek(0, io.SeekStart)
+			_, err = scanner3.Parse(f, hdlr)
+			if err != nil {
+				t.Errorf("Error : %v", err)
+				continue
+			}
+		*/
 		/*
 			hdlr = TestHandler{}
 			scanner4 := grammarparser.GrammarParser{}
