@@ -119,12 +119,9 @@ func (s *ScanParser3) postData(key common.AttrId, token []byte) error {
 }
 
 func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (nBytes int, err error) {
-	custSplitFn := func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		return s.splitFunctionMain(data, atEOF)
-	}
 	var lastToken []byte
 	s.Init()
-	scan.Split(custSplitFn)
+	scan.Split(s.splitFunctionMain)
 
 	for scan.Scan() {
 		s.tokenCount++
