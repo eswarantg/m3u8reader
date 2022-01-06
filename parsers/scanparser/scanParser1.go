@@ -34,7 +34,7 @@ func (s *ScanParser1) Parse(rdr io.Reader, handler parsers.M3u8Handler) (nBytes 
 	s.extHandler = handler
 	scan := bufio.NewScanner(rdr)
 	if s.buffer == nil {
-		s.buffer = make([]byte, 4096)
+		s.buffer = make([]byte, 0, 4096)
 	}
 	scan.Buffer(s.buffer, len(s.buffer))
 	return parseM3U8(scan, s)
@@ -45,7 +45,7 @@ func (s *ScanParser1) ParseData(data []byte, handler parsers.M3u8Handler) (nByte
 	rdr := bytes.NewReader(data)
 	scan := bufio.NewScanner(rdr)
 	if s.buffer == nil {
-		s.buffer = make([]byte, 4096)
+		s.buffer = make([]byte, 0, 4096)
 	}
 	scan.Buffer(s.buffer, len(s.buffer))
 	return parseM3U8(scan, s)

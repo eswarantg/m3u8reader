@@ -31,6 +31,7 @@ func Test_M3u81(t *testing.T) {
 			return
 		}
 		defer f.Close()
+		parsers.AttrKVPairsSyncPool = true
 		manifest := m3u8reader.M3U8{}
 		manifest.SetParserOption(m3u8reader.M3U8ParserScanner1)
 		_, err = manifest.Read(f)
@@ -86,6 +87,7 @@ func Test_M3u83(t *testing.T) {
 		"test/master.m3u8",
 		"test/sub.m3u8",
 	}
+	parsers.AttrKVPairsSyncPool = true
 	for i, file := range tests {
 		fmt.Printf("\n********* Test %v - %v ************", i, file)
 		f, err := os.Open(file)
@@ -117,6 +119,7 @@ func Test_M3u84(t *testing.T) {
 		"test/master.m3u8",
 		"test/sub.m3u8",
 	}
+	parsers.AttrKVPairsSyncPool = true
 	for i, file := range tests {
 		fmt.Printf("\n********* Test %v - %v ************", i, file)
 		f, err := os.Open(file)
@@ -140,6 +143,7 @@ func Test_PreloadHintEntry(t *testing.T) {
 	tests := []string{
 		"test/submani.m3u8",
 	}
+	parsers.AttrKVPairsSyncPool = true
 	for i, file := range tests {
 		fmt.Printf("\n********* Test %v - %v ************", i, file)
 		f, err := os.Open(file)
@@ -165,6 +169,7 @@ func Test_MPL(t *testing.T) {
 		//"test/master.m3u8",
 		"test/main-manifest.m3u8",
 	}
+	parsers.AttrKVPairsSyncPool = true
 	for i, file := range tests {
 		fmt.Printf("\n********* Test %v - %v ************", i, file)
 		f, err := os.Open(file)
@@ -197,6 +202,7 @@ func Test_ProgramTime(t *testing.T) {
 		"test/submani.m3u8",
 		"test/sub_hls.m3u8",
 	}
+	parsers.AttrKVPairsSyncPool = true
 	for i, file := range tests {
 		fmt.Printf("\n********* Test %v - %v ************", i, file)
 		f, err := os.Open(file)
@@ -240,6 +246,7 @@ func Benchmark_Read1a(b *testing.B) {
 	}
 }
 
+/*
 func Benchmark_Read1b(b *testing.B) {
 	b.StopTimer()
 	f, err := os.Open("test/sub.m3u8")
@@ -263,7 +270,7 @@ func Benchmark_Read1b(b *testing.B) {
 		manifest.Done()
 	}
 }
-
+*/
 func Benchmark_Read1a_sync(b *testing.B) {
 	b.StopTimer()
 	parsers.AttrKVPairsSyncPool = true
@@ -290,6 +297,7 @@ func Benchmark_Read1a_sync(b *testing.B) {
 	}
 }
 
+/*
 func Benchmark_Read1b_sync(b *testing.B) {
 	b.StopTimer()
 	parsers.AttrKVPairsSyncPool = true
@@ -314,7 +322,7 @@ func Benchmark_Read1b_sync(b *testing.B) {
 		manifest.Done()
 	}
 }
-
+*/
 /*
 func Benchmark_Read2(b *testing.B) {
 	f, err := os.Open("test/sub.m3u8")
