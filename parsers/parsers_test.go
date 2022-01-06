@@ -10,9 +10,7 @@ import (
 
 	"github.com/eswarantg/m3u8reader/common"
 	"github.com/eswarantg/m3u8reader/parsers"
-	grammarparser "github.com/eswarantg/m3u8reader/parsers/grammarParser"
 	"github.com/eswarantg/m3u8reader/parsers/scanparser"
-	"github.com/eswarantg/m3u8reader/parsers/yaccparser"
 )
 
 type TestHandler struct {
@@ -63,25 +61,25 @@ func Test_MediaM3u8(t *testing.T) {
 			continue
 		}
 
-		fmt.Printf("\n****** ScanParser1 - w/o sync ******")
+		fmt.Printf("\n****** ScanParser3 - w/o sync ******")
 		hdlr = TestHandler{}
 		parsers.AttrKVPairsSyncPool = false
-		scanner1 := scanparser.ScanParser1{}
+		scanner1 := scanparser.ScanParser3{}
 		_, err = scanner1.ParseData(data, hdlr)
 		if err != nil {
 			t.Errorf("Error : %v", err)
 			continue
 		}
-
-		fmt.Printf("\n****** ScanParser1 - w/ sync ******")
-		hdlr = TestHandler{}
-		parsers.AttrKVPairsSyncPool = true
-		_, err = scanner1.ParseData(data, hdlr)
-		if err != nil {
-			t.Errorf("Error : %v", err)
-			continue
-		}
-
+		/*
+			fmt.Printf("\n****** ScanParser3 - w/ sync ******")
+			hdlr = TestHandler{}
+			parsers.AttrKVPairsSyncPool = true
+			_, err = scanner1.ParseData(data, hdlr)
+			if err != nil {
+				t.Errorf("Error : %v", err)
+				continue
+			}
+		*/
 		/*
 			fmt.Printf("\n****** ScanParser2 ******")
 			hdlr = TestHandler{}
@@ -127,17 +125,17 @@ func Test_MasterM3u8(t *testing.T) {
 		}
 		defer f.Close()
 
-		fmt.Printf("\n****** ScanParser1 - w/o sync ******")
+		fmt.Printf("\n****** ScanParser3 - w/o sync ******")
 		hdlr = TestHandler{}
 		parsers.AttrKVPairsSyncPool = false
-		scanner1 := scanparser.ScanParser1{}
+		scanner1 := scanparser.ScanParser3{}
 		_, err = scanner1.Parse(f, hdlr)
 		if err != nil {
 			t.Errorf("Error : %v", err)
 			continue
 		}
 
-		fmt.Printf("\n****** ScanParser1 - w/ sync ******")
+		fmt.Printf("\n****** ScanParser3 - w/ sync ******")
 		hdlr = TestHandler{}
 		parsers.AttrKVPairsSyncPool = true
 		_, err = scanner1.Parse(f, hdlr)
@@ -179,7 +177,8 @@ func Test_MasterM3u8(t *testing.T) {
 	}
 }
 
-func BenchmarkParse1(b *testing.B) {
+/*
+func BenchmarkParse1a(b *testing.B) {
 	f, err := os.Open("../test/sub.m3u8")
 	if err != nil {
 		b.Errorf("Error : %v", err)
@@ -189,10 +188,80 @@ func BenchmarkParse1(b *testing.B) {
 		b.Errorf("Error : %v", err)
 	}
 	f.Close()
+	parsers.AttrKVPairsSyncPool = false
 	for n := 0; n < b.N; n++ {
 		hdlr := EmptyHandler{}
 		rdr := bytes.NewReader(manifest)
 		scanner := scanparser.ScanParser1{}
+		_, err = scanner.Parse(rdr, hdlr)
+		if err != nil {
+			b.Errorf("Error : %v", err)
+			return
+		}
+	}
+}
+
+func BenchmarkParse1b(b *testing.B) {
+	f, err := os.Open("../test/sub.m3u8")
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	manifest, err := ioutil.ReadAll(f)
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	f.Close()
+	parsers.AttrKVPairsSyncPool = true
+	for n := 0; n < b.N; n++ {
+		hdlr := EmptyHandler{}
+		rdr := bytes.NewReader(manifest)
+		scanner := scanparser.ScanParser1{}
+		_, err = scanner.Parse(rdr, hdlr)
+		if err != nil {
+			b.Errorf("Error : %v", err)
+			return
+		}
+	}
+}
+
+func BenchmarkParse2a(b *testing.B) {
+	f, err := os.Open("../test/sub.m3u8")
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	manifest, err := ioutil.ReadAll(f)
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	f.Close()
+	parsers.AttrKVPairsSyncPool = false
+	for n := 0; n < b.N; n++ {
+		hdlr := EmptyHandler{}
+		rdr := bytes.NewReader(manifest)
+		scanner := scanparser.ScanParser3{}
+		_, err = scanner.Parse(rdr, hdlr)
+		if err != nil {
+			b.Errorf("Error : %v", err)
+			return
+		}
+	}
+}
+*/
+func BenchmarkParse2b(b *testing.B) {
+	f, err := os.Open("../test/sub.m3u8")
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	manifest, err := ioutil.ReadAll(f)
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	f.Close()
+	parsers.AttrKVPairsSyncPool = true
+	for n := 0; n < b.N; n++ {
+		hdlr := EmptyHandler{}
+		rdr := bytes.NewReader(manifest)
+		scanner := scanparser.ScanParser3{}
 		_, err = scanner.Parse(rdr, hdlr)
 		if err != nil {
 			b.Errorf("Error : %v", err)
@@ -225,6 +294,7 @@ func BenchmarkParse2(b *testing.B) {
 }
 */
 
+/*
 func BenchmarkParse3(b *testing.B) {
 	f, err := os.Open("../test/sub.m3u8")
 	if err != nil {
@@ -246,7 +316,9 @@ func BenchmarkParse3(b *testing.B) {
 		}
 	}
 }
+*/
 
+/*
 func BenchmarkParse4(b *testing.B) {
 	f, err := os.Open("../test/sub.m3u8")
 	if err != nil {
@@ -267,3 +339,4 @@ func BenchmarkParse4(b *testing.B) {
 		}
 	}
 }
+*/
