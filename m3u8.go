@@ -17,6 +17,7 @@ type ParserOption int
 const (
 	M3U8ParserScanner1 ParserOption = iota
 	M3U8ParserScanner2
+	M3U8ParserScanner3
 	M3U8ParserGrammar
 	M3U8ParserYacc
 )
@@ -97,7 +98,7 @@ func (m *M3U8) getParser() parsers.Parser {
 	case M3U8ParserScanner1:
 		fallthrough
 	default:
-		return &scanparser.ScanParser1{}
+		return &scanparser.ScanParser3{}
 	}
 }
 

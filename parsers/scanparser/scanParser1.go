@@ -37,7 +37,7 @@ func (s *ScanParser1) Parse(rdr io.Reader, handler parsers.M3u8Handler) (nBytes 
 		s.buffer = make([]byte, 0, 4096)
 	}
 	scan.Buffer(s.buffer, len(s.buffer))
-	return parseM3U8(scan, s)
+	return parseM3U8_1(scan, s)
 }
 
 func (s *ScanParser1) ParseData(data []byte, handler parsers.M3u8Handler) (nBytes int, err error) {
@@ -48,10 +48,10 @@ func (s *ScanParser1) ParseData(data []byte, handler parsers.M3u8Handler) (nByte
 		s.buffer = make([]byte, 0, 4096)
 	}
 	scan.Buffer(s.buffer, len(s.buffer))
-	return parseM3U8(scan, s)
+	return parseM3U8_1(scan, s)
 }
 
-func parseM3U8(s *bufio.Scanner, handler parsers.M3u8Handler) (nBytes int, err error) {
+func parseM3U8_1(s *bufio.Scanner, handler parsers.M3u8Handler) (nBytes int, err error) {
 	//Custom Split Function - Begin
 	tokenCount := -1
 	inTokenRead := false
