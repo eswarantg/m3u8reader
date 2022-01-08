@@ -222,6 +222,9 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 			break
 		}
 	}
+	if scan.Err() != nil {
+		err = scan.Err()
+	}
 	if err == nil {
 		if s.key != nil {
 			var attr common.AttrId
@@ -290,11 +293,7 @@ func (s *ScanParser3) readQuotedString(data []byte, atEOF bool) (advance int, to
 }
 func (s *ScanParser3) readEntryName(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	for i, ch := range data {
-		if ch == '\r' || ch == '\n' {
-			s.nBytes += i
-			s.popState()
-			return 0, nil, errors.New("unexpected space reading enumerated string")
-		} else if ch == ':' {
+		if ch == '\r' || ch == '\n' || ch == ':' {
 			s.nBytes += i
 			s.popState()
 			return i, data[0:i], nil
@@ -318,10 +317,10 @@ func (s *ScanParser3) readEnumeratedString(data []byte, atEOF bool) (advance int
 			//don't include the delimiter
 			//read = i (adjust for ZERO st value of i)...
 			return i, data[0:i], nil
-		} else if ch == ' ' {
+		} else if ch == ' ' || ch == '"' {
 			s.nBytes += i
 			s.popState()
-			return 0, nil, errors.New("unexpected space reading enumerated string")
+			return 0, nil, fmt.Errorf("unexpected char (%v) reading enumerated string", ch)
 		}
 	}
 	if atEOF {
