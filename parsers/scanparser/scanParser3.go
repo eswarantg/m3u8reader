@@ -139,8 +139,8 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 				s.pushState(s3_ReadingEntryName)
 			case '\n':
 				//ignore empty line
-			case ':', '=', ',':
-				fallthrough
+			//case ':', '=', ',':
+			//fallthrough
 			default:
 				err = fmt.Errorf("unexpected token %v received when waiting for EntryStart", string(curToken))
 			}
@@ -251,23 +251,16 @@ func (s *ScanParser3) splitFunctionMain(data []byte, atEOF bool) (advance int, t
 		return s.readAnyString(data, atEOF)
 	}
 	for i, ch := range data {
-		switch ch {
-		case ' ':
-			s.nBytes++
-			continue //ignore space
-		case '\r':
-			s.nBytes++
-			continue //ignore carriage return
-		case '#', ':', '=', ',', '\n':
-			s.nBytes++
+		if ch == '#' || ch == ':' || ch == '=' || ch == ',' || ch == '\n' {
+			s.nBytes += i
 			return i + 1, data[i : i+1], nil
 		}
 	}
 	if atEOF {
 		i := len(data)
 		if i > 0 {
-			s.popState()
 			s.nBytes += i
+			s.popState()
 			return i, data[0:i], nil
 		}
 	}
@@ -276,21 +269,20 @@ func (s *ScanParser3) splitFunctionMain(data []byte, atEOF bool) (advance int, t
 
 func (s *ScanParser3) readQuotedString(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	for i, ch := range data {
-		switch ch {
-		case '"':
-			if i > 0 {
-				s.popState()
-				//read = i + 1 (skip quotes)
-				s.nBytes += i + 1
-				//data = 1:i  (skip last quote)
-				return i, data[1:i], nil
-			}
-		case '\n', '\r':
+		if ch == '"' {
+			s.nBytes += i
+			s.popState()
+			//data = 1:i  (skip last quote)
+			return i, data[1:i], nil
+
+		} else if ch == '\r' || ch == '\n' {
+			s.nBytes += i
 			s.popState()
 			return 0, nil, errors.New("multi-line quoted string not supported")
 		}
 	}
 	if atEOF {
+		s.nBytes += len(data)
 		s.popState()
 		return 0, nil, errors.New("non-terminated quote string not supported")
 	}
@@ -298,22 +290,21 @@ func (s *ScanParser3) readQuotedString(data []byte, atEOF bool) (advance int, to
 }
 func (s *ScanParser3) readEntryName(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	for i, ch := range data {
-		switch ch {
-		case ' ':
-			return 0, nil, errors.New("unexpected space reading entry name")
-		case '\n', '\r', ':':
-			s.popState()
-			//don't include the delimiter
-			//read = i (adjust for ZERO st value of i)...
+		if ch == '\r' || ch == '\n' {
 			s.nBytes += i
+			s.popState()
+			return 0, nil, errors.New("unexpected space reading enumerated string")
+		} else if ch == ':' {
+			s.nBytes += i
+			s.popState()
 			return i, data[0:i], nil
 		}
 	}
 	if atEOF {
 		i := len(data)
 		if i > 0 {
-			s.popState()
 			s.nBytes += i
+			s.popState()
 			return i, data[0:i], nil
 		}
 	}
@@ -321,22 +312,23 @@ func (s *ScanParser3) readEntryName(data []byte, atEOF bool) (advance int, token
 }
 func (s *ScanParser3) readEnumeratedString(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	for i, ch := range data {
-		switch ch {
-		case ' ':
-			return 0, nil, errors.New("unexpected space reading enumerated string")
-		case '\n', '\r', ',', '=', '#':
+		if ch == '\r' || ch == '\n' || ch == ',' || ch == '=' || ch == '#' {
+			s.nBytes += i
 			s.popState()
 			//don't include the delimiter
 			//read = i (adjust for ZERO st value of i)...
-			s.nBytes += i
 			return i, data[0:i], nil
+		} else if ch == ' ' {
+			s.nBytes += i
+			s.popState()
+			return 0, nil, errors.New("unexpected space reading enumerated string")
 		}
 	}
 	if atEOF {
 		i := len(data)
 		if i > 0 {
-			s.popState()
 			s.nBytes += i
+			s.popState()
 			return i, data[0:i], nil
 		}
 	}
