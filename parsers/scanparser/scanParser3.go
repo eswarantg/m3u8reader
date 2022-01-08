@@ -273,11 +273,12 @@ func (s *ScanParser3) splitFunctionMain(data []byte, atEOF bool) (advance int, t
 func (s *ScanParser3) readQuotedString(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	for i, ch := range data {
 		if ch == '"' {
-			s.nBytes += i
-			s.popState()
-			//data = 1:i  (skip last quote)
-			return i, data[1:i], nil
-
+			if i > 0 {
+				s.nBytes += i
+				s.popState()
+				//data = 1:i  (skip last quote)
+				return i, data[1:i], nil
+			}
 		} else if ch == '\r' || ch == '\n' {
 			s.nBytes += i
 			s.popState()
