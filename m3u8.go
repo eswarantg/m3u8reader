@@ -35,6 +35,7 @@ type M3U8 struct {
 	nextMediaSequenceNumber int64
 	nextPartNumber          int64
 	parserOption            ParserOption
+	buffer                  []byte
 }
 
 func (m *M3U8) Done() {
@@ -45,6 +46,9 @@ func (m *M3U8) Done() {
 
 func (m *M3U8) SetParserOption(opt ParserOption) {
 	m.parserOption = opt
+}
+func (m *M3U8) SetBuffer(buffer []byte) {
+	m.buffer = buffer
 }
 
 func (m *M3U8) String() string {
@@ -105,13 +109,21 @@ func (m *M3U8) getParser() parsers.Parser {
 func (m *M3U8) ParseData(data []byte) (n int, err error) {
 	m.Init()
 	p := m.getParser()
-	return p.ParseData(data, m)
+	if m.buffer != nil {
+		p.SetBuffer(m.buffer)
+	}
+	n, err = p.ParseData(data, m)
+	return
 }
 
 func (m *M3U8) Read(src io.Reader) (n int, err error) {
 	m.Init()
 	p := m.getParser()
-	return p.Parse(src, m)
+	if m.buffer != nil {
+		p.SetBuffer(m.buffer)
+	}
+	n, err = p.Parse(src, m)
+	return
 }
 
 func (m *M3U8) postRecordEntry(entry M3U8Entry) (err error) {

@@ -15,6 +15,9 @@ type ScanParser1 struct {
 	buffer     []byte
 }
 
+func (p *ScanParser1) SetBuffer([]byte) {
+}
+
 func (s *ScanParser1) PostRecord(tag common.TagId, kvpairs *parsers.AttrKVPairs) error {
 	var err error
 	if kvpairs != nil {

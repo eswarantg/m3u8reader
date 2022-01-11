@@ -118,6 +118,7 @@ func Test_MasterM3u8(t *testing.T) {
 	var files = [...]string{
 		"../test/manifest.m3u8",
 	}
+	buffer := make([]byte, 4096)
 	for _, file := range files {
 		f, err := os.Open(file)
 		if err != nil {
@@ -129,6 +130,7 @@ func Test_MasterM3u8(t *testing.T) {
 		hdlr = TestHandler{}
 		parsers.AttrKVPairsSyncPool = false
 		scanner1 := scanparser.ScanParser3{}
+		scanner1.SetBuffer(buffer)
 		_, err = scanner1.Parse(f, hdlr)
 		if err != nil {
 			t.Errorf("Error : %v", err)
@@ -247,6 +249,8 @@ func BenchmarkParse2a(b *testing.B) {
 	}
 }
 */
+
+/*
 func BenchmarkParse2b(b *testing.B) {
 	f, err := os.Open("../test/sub.m3u8")
 	if err != nil {
@@ -262,6 +266,32 @@ func BenchmarkParse2b(b *testing.B) {
 		hdlr := EmptyHandler{}
 		rdr := bytes.NewReader(manifest)
 		scanner := scanparser.ScanParser3{}
+		_, err = scanner.Parse(rdr, hdlr)
+		if err != nil {
+			b.Errorf("Error : %v", err)
+			return
+		}
+	}
+}
+*/
+
+func BenchmarkParse2b_1(b *testing.B) {
+	f, err := os.Open("../test/sub.m3u8")
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	buffer := make([]byte, 4096)
+	manifest, err := ioutil.ReadAll(f)
+	if err != nil {
+		b.Errorf("Error : %v", err)
+	}
+	f.Close()
+	parsers.AttrKVPairsSyncPool = true
+	for n := 0; n < b.N; n++ {
+		hdlr := EmptyHandler{}
+		rdr := bytes.NewReader(manifest)
+		scanner := scanparser.ScanParser3{}
+		scanner.SetBuffer(buffer)
 		_, err = scanner.Parse(rdr, hdlr)
 		if err != nil {
 			b.Errorf("Error : %v", err)

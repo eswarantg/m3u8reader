@@ -342,6 +342,9 @@ func (p *GrammarParser) readingOpens(data []byte) (remain []byte, err error) {
 	return
 }
 
+func (p *GrammarParser) SetBuffer([]byte) {
+}
+
 func (p *GrammarParser) Parse(rdr io.Reader, handler parsers.M3u8Handler) (nBytes int, err error) {
 	data, err := io.ReadAll(rdr)
 	if err != nil {

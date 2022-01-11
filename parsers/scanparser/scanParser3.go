@@ -69,6 +69,10 @@ func (s *ScanParser3) popState() {
 	s.savedState = s.savedState[:len(s.savedState)-1]
 }
 
+func (s *ScanParser3) SetBuffer(buffer []byte) {
+	s.buffer = buffer
+}
+
 func (s *ScanParser3) PostRecord(tag common.TagId, kvpairs *parsers.AttrKVPairs) error {
 	var err error
 	if kvpairs != nil {

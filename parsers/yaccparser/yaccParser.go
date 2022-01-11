@@ -40,6 +40,9 @@ func (y *YaccParser) yyparse(r io.Reader, handler parsers.M3u8Handler) (nbytes i
 	return
 }
 
+func (p *YaccParser) SetBuffer([]byte) {
+}
+
 func (y *YaccParser) Parse(rdr io.Reader, handler parsers.M3u8Handler) (nBytes int, err error) {
 	defer func() {
 		y.extHander = nil

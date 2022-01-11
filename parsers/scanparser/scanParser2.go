@@ -16,6 +16,9 @@ type ScanParser2 struct {
 	extHander parsers.M3u8Handler
 }
 
+func (p *ScanParser2) SetBuffer([]byte) {
+}
+
 func (s *ScanParser2) PostRecord(tag common.TagId, kvpairs *parsers.AttrKVPairs) error {
 	var err error
 	if kvpairs != nil {
