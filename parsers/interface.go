@@ -11,7 +11,6 @@ type M3u8Handler interface {
 }
 
 type Parser interface {
-	SetBuffer([]byte)
-	ParseData(data []byte, handler M3u8Handler) (nBytes int, err error)
-	Parse(rdr io.Reader, handler M3u8Handler) (nBytes int, err error)
+	ParseData(data []byte, handler M3u8Handler, parseBuffer []byte) (nBytes int, err error)
+	Parse(rdr io.Reader, handler M3u8Handler, parseBuffer []byte) (nBytes int, err error)
 }

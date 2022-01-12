@@ -12,10 +12,6 @@ import (
 
 type ScanParser1 struct {
 	extHandler parsers.M3u8Handler
-	buffer     []byte
-}
-
-func (p *ScanParser1) SetBuffer([]byte) {
 }
 
 func (s *ScanParser1) PostRecord(tag common.TagId, kvpairs *parsers.AttrKVPairs) error {
@@ -33,24 +29,18 @@ func (s *ScanParser1) PostRecord(tag common.TagId, kvpairs *parsers.AttrKVPairs)
 	return err
 }
 
-func (s *ScanParser1) Parse(rdr io.Reader, handler parsers.M3u8Handler) (nBytes int, err error) {
+func (s *ScanParser1) Parse(rdr io.Reader, handler parsers.M3u8Handler, buffer []byte) (nBytes int, err error) {
 	s.extHandler = handler
 	scan := bufio.NewScanner(rdr)
-	if s.buffer == nil {
-		s.buffer = make([]byte, 0, 4096)
-	}
-	scan.Buffer(s.buffer, len(s.buffer))
+	scan.Buffer(buffer, len(buffer))
 	return parseM3U8_1(scan, s)
 }
 
-func (s *ScanParser1) ParseData(data []byte, handler parsers.M3u8Handler) (nBytes int, err error) {
+func (s *ScanParser1) ParseData(data []byte, handler parsers.M3u8Handler, buffer []byte) (nBytes int, err error) {
 	s.extHandler = handler
 	rdr := bytes.NewReader(data)
 	scan := bufio.NewScanner(rdr)
-	if s.buffer == nil {
-		s.buffer = make([]byte, 0, 4096)
-	}
-	scan.Buffer(s.buffer, len(s.buffer))
+	scan.Buffer(buffer, len(buffer))
 	return parseM3U8_1(scan, s)
 }
 

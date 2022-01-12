@@ -142,13 +142,18 @@ func checkExists(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId common.T
 	return nil
 }
 func convertToFloat64(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId common.TagId, optional bool) error {
+	var newVal float64
+	var err error
 	for _, attrId := range attrIds {
 		if val := kv.Get(attrId); val != nil {
-			v, ok := val.(string)
-			if !ok {
-				panic(fmt.Sprintf("\nconvertToFloat64 %v:%v is %T(\"%v\") not string", common.TagNames[tagId], common.AttrNames[attrId], val, val))
+			switch v := val.(type) {
+			case []byte:
+				newVal, err = strconv.ParseFloat(string(v), 64)
+			case string:
+				newVal, err = strconv.ParseFloat(v, 64)
+			default:
+				panic(fmt.Sprintf("\nconvertToFloat64 %v:%v is %T(\"%v\") not string", common.TagNames[tagId], common.AttrNames[attrId], v, v))
 			}
-			newVal, err := strconv.ParseFloat(v, 64)
 			if err != nil {
 				return fmt.Errorf("%v invalid Float value %v=\"%v\" - %v", common.TagNames[tagId],
 					common.AttrNames[attrId], val, err.Error())
@@ -161,13 +166,18 @@ func convertToFloat64(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId com
 	return nil
 }
 func convertToInt64(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId common.TagId, optional bool) error {
+	var newVal int64
+	var err error
 	for _, attrId := range attrIds {
 		if val := kv.Get(attrId); val != nil {
-			v, ok := val.(string)
-			if !ok {
-				panic(fmt.Sprintf("\nconvertToInt64 %v:%v is %T(\"%v\") not string", common.TagNames[tagId], common.AttrNames[attrId], val, val))
+			switch v := val.(type) {
+			case []byte:
+				newVal, err = strconv.ParseInt(string(v), 10, 64)
+			case string:
+				newVal, err = strconv.ParseInt(v, 10, 64)
+			default:
+				panic(fmt.Sprintf("\nconvertToFloat64 %v:%v is %T(\"%v\") not string", common.TagNames[tagId], common.AttrNames[attrId], v, v))
 			}
-			newVal, err := strconv.ParseInt(v, 10, 64)
 			if err != nil {
 				return fmt.Errorf("%v invalid Intvalue %v=\"%v\" - %v", common.TagNames[tagId],
 					common.AttrNames[attrId], val, err.Error())
@@ -180,13 +190,18 @@ func convertToInt64(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId commo
 	return nil
 }
 func convertToTime(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId common.TagId, optional bool) error {
+	var newVal time.Time
+	var err error
 	for _, attrId := range attrIds {
 		if val := kv.Get(attrId); val != nil {
-			v, ok := val.(string)
-			if !ok {
-				panic(fmt.Sprintf("\nconvertToTime %v:%v is %T(\"%v\") not string", common.TagNames[tagId], common.AttrNames[attrId], val, val))
+			switch v := val.(type) {
+			case []byte:
+				newVal, err = time.Parse(time.RFC3339Nano, string(v))
+			case string:
+				newVal, err = time.Parse(time.RFC3339Nano, v)
+			default:
+				panic(fmt.Sprintf("\nconvertToFloat64 %v:%v is %T(\"%v\") not string", common.TagNames[tagId], common.AttrNames[attrId], v, v))
 			}
-			newVal, err := time.Parse(time.RFC3339Nano, v)
 			if err != nil {
 				return fmt.Errorf("%v invalid Time value %v=\"%v\" - %v", common.TagNames[tagId],
 					common.AttrNames[attrId], val, err.Error())

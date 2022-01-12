@@ -15,13 +15,13 @@ type s3_ParsingState int
 
 type ScanParser3 struct {
 	extHandler parsers.M3u8Handler
-	buffer     []byte
 
 	//Parsing States
-	state      s3_ParsingState
-	savedState []s3_ParsingState
-	tokenCount int
-	nBytes     int
+	state         s3_ParsingState
+	savedState    [10]s3_ParsingState
+	savedStateTop int
+	tokenCount    int
+	nBytes        int
 
 	kvpairs *parsers.AttrKVPairs
 	tag     []byte
@@ -42,9 +42,9 @@ const (
 
 func (s *ScanParser3) Init() {
 	s.tokenCount = -1
+	s.savedStateTop = -1
 	s.nBytes = 0
-	s.state = s3_UndefinedState //bad state if we pop this
-	s.savedState = make([]s3_ParsingState, 0, 10)
+	s.state = s3_UndefinedState       //bad state if we pop this
 	s.pushState(s3_WaitingEntryStart) //push the starting state
 	s.kvpairs = parsers.NewAttrKVPairs()
 	s.tag = nil
@@ -53,24 +53,23 @@ func (s *ScanParser3) Init() {
 }
 
 func (s *ScanParser3) pushState(newState s3_ParsingState) {
-	s.savedState = append(s.savedState, s.state)
+	if s.savedStateTop >= len(s.savedState) {
+		panic("saved state len is not enough")
+	}
+	s.savedStateTop++
+	s.savedState[s.savedStateTop] = s.state
 	s.state = newState
 }
 func (s *ScanParser3) replaceState(newState s3_ParsingState) {
-	//s.savedState = append(s.savedState, s.state)
 	s.state = newState
 }
 
 func (s *ScanParser3) popState() {
-	if len(s.savedState) <= 0 {
+	if s.savedStateTop < 0 {
 		panic("empty saved state stack")
 	}
-	s.state = s.savedState[len(s.savedState)-1]
-	s.savedState = s.savedState[:len(s.savedState)-1]
-}
-
-func (s *ScanParser3) SetBuffer(buffer []byte) {
-	s.buffer = buffer
+	s.state = s.savedState[s.savedStateTop]
+	s.savedStateTop--
 }
 
 func (s *ScanParser3) PostRecord(tag common.TagId, kvpairs *parsers.AttrKVPairs) error {
@@ -82,30 +81,24 @@ func (s *ScanParser3) PostRecord(tag common.TagId, kvpairs *parsers.AttrKVPairs)
 		}
 	}
 	if s.extHandler == nil {
-		panic("\nInvalid extHandler for post")
+		panic("Invalid extHandler for post")
 	}
 	err = s.extHandler.PostRecord(tag, kvpairs)
 	return err
 }
 
-func (s *ScanParser3) Parse(rdr io.Reader, handler parsers.M3u8Handler) (nBytes int, err error) {
+func (s *ScanParser3) Parse(rdr io.Reader, handler parsers.M3u8Handler, buffer []byte) (nBytes int, err error) {
 	s.extHandler = handler
 	scan := bufio.NewScanner(rdr)
-	if s.buffer == nil {
-		s.buffer = make([]byte, 0, 4096)
-	}
-	scan.Buffer(s.buffer, len(s.buffer))
+	scan.Buffer(buffer, len(buffer))
 	return s.parse(scan, s)
 }
 
-func (s *ScanParser3) ParseData(data []byte, handler parsers.M3u8Handler) (nBytes int, err error) {
+func (s *ScanParser3) ParseData(data []byte, handler parsers.M3u8Handler, buffer []byte) (nBytes int, err error) {
 	s.extHandler = handler
 	rdr := bytes.NewReader(data)
 	scan := bufio.NewScanner(rdr)
-	if s.buffer == nil {
-		s.buffer = make([]byte, 0, 4096)
-	}
-	scan.Buffer(s.buffer, len(s.buffer))
+	scan.Buffer(buffer, len(buffer))
 	return s.parse(scan, s)
 }
 
@@ -115,7 +108,7 @@ func (s *ScanParser3) postData(key common.AttrId, token []byte) error {
 		case common.M3U8ExtInf:
 			key = common.M3U8Uri
 		default:
-			return fmt.Errorf("duplicate INTUnknownAttr for %v required", s.tag)
+			return fmt.Errorf("duplicate INTUnknownAttr for %v required", string(s.tag))
 		}
 	}
 	s.kvpairs.Store(key, string(token))
@@ -246,7 +239,7 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 	return s.nBytes, err
 }
 
-func (s *ScanParser3) splitFunctionMain(data []byte, atEOF bool) (advance int, token []byte, err error) {
+func (s *ScanParser3) splitFunctionMain(data []byte, atEOF bool) (int, []byte, error) {
 	switch s.state {
 	case s3_ReadingQuote:
 		return s.readQuotedString(data, atEOF)
@@ -274,7 +267,7 @@ func (s *ScanParser3) splitFunctionMain(data []byte, atEOF bool) (advance int, t
 	return 0, nil, nil //need more characters
 }
 
-func (s *ScanParser3) readQuotedString(data []byte, atEOF bool) (advance int, token []byte, err error) {
+func (s *ScanParser3) readQuotedString(data []byte, atEOF bool) (int, []byte, error) {
 	for i, ch := range data {
 		if ch == '"' {
 			if i > 0 {
@@ -296,7 +289,7 @@ func (s *ScanParser3) readQuotedString(data []byte, atEOF bool) (advance int, to
 	}
 	return 0, nil, nil //need more characters
 }
-func (s *ScanParser3) readEntryName(data []byte, atEOF bool) (advance int, token []byte, err error) {
+func (s *ScanParser3) readEntryName(data []byte, atEOF bool) (int, []byte, error) {
 	for i, ch := range data {
 		if ch == '\r' || ch == '\n' || ch == ':' {
 			s.nBytes += i
@@ -314,7 +307,7 @@ func (s *ScanParser3) readEntryName(data []byte, atEOF bool) (advance int, token
 	}
 	return 0, nil, nil //need more characters
 }
-func (s *ScanParser3) readEnumeratedString(data []byte, atEOF bool) (advance int, token []byte, err error) {
+func (s *ScanParser3) readEnumeratedString(data []byte, atEOF bool) (int, []byte, error) {
 	for i, ch := range data {
 		if ch == '\r' || ch == '\n' || ch == ',' || ch == '=' || ch == '#' {
 			s.nBytes += i
@@ -338,7 +331,7 @@ func (s *ScanParser3) readEnumeratedString(data []byte, atEOF bool) (advance int
 	}
 	return 0, nil, nil //need more characters
 }
-func (s *ScanParser3) readAnyString(data []byte, atEOF bool) (advance int, token []byte, err error) {
+func (s *ScanParser3) readAnyString(data []byte, atEOF bool) (int, []byte, error) {
 	if data[0] == '"' {
 		s.replaceState(s3_ReadingQuote)
 		return s.readQuotedString(data, atEOF)

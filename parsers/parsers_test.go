@@ -55,6 +55,7 @@ func Test_MediaM3u8(t *testing.T) {
 	files := [...]string{
 		"../test/sub.m3u8",
 	}
+	buffer := make([]byte, 4096)
 	for _, file := range files {
 		data, err := ReadFile(file, t)
 		if err != nil {
@@ -65,7 +66,7 @@ func Test_MediaM3u8(t *testing.T) {
 		hdlr = TestHandler{}
 		parsers.AttrKVPairsSyncPool = false
 		scanner1 := scanparser.ScanParser3{}
-		_, err = scanner1.ParseData(data, hdlr)
+		_, err = scanner1.ParseData(data, hdlr, buffer)
 		if err != nil {
 			t.Errorf("Error : %v", err)
 			continue
@@ -130,8 +131,7 @@ func Test_MasterM3u8(t *testing.T) {
 		hdlr = TestHandler{}
 		parsers.AttrKVPairsSyncPool = false
 		scanner1 := scanparser.ScanParser3{}
-		scanner1.SetBuffer(buffer)
-		_, err = scanner1.Parse(f, hdlr)
+		_, err = scanner1.Parse(f, hdlr, buffer)
 		if err != nil {
 			t.Errorf("Error : %v", err)
 			continue
@@ -140,7 +140,7 @@ func Test_MasterM3u8(t *testing.T) {
 		fmt.Printf("\n****** ScanParser3 - w/ sync ******")
 		hdlr = TestHandler{}
 		parsers.AttrKVPairsSyncPool = true
-		_, err = scanner1.Parse(f, hdlr)
+		_, err = scanner1.Parse(f, hdlr, buffer)
 		if err != nil {
 			t.Errorf("Error : %v", err)
 			continue
@@ -291,8 +291,7 @@ func BenchmarkParse2b_1(b *testing.B) {
 		hdlr := EmptyHandler{}
 		rdr := bytes.NewReader(manifest)
 		scanner := scanparser.ScanParser3{}
-		scanner.SetBuffer(buffer)
-		_, err = scanner.Parse(rdr, hdlr)
+		_, err = scanner.Parse(rdr, hdlr, buffer)
 		if err != nil {
 			b.Errorf("Error : %v", err)
 			return

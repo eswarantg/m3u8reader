@@ -36,9 +36,11 @@ func (m *M3U8Entry) URI() (string, error) {
 	if attrId != -1 {
 		val := m.Values.Get(attrId)
 		if val != nil {
-			ret, ok := val.(string)
-			if ok {
-				return ret, nil
+			switch v := val.(type) {
+			case string:
+				return v, nil
+			case []byte:
+				return string(v), nil
 			}
 		}
 	}

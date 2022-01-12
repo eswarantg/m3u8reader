@@ -342,18 +342,15 @@ func (p *GrammarParser) readingOpens(data []byte) (remain []byte, err error) {
 	return
 }
 
-func (p *GrammarParser) SetBuffer([]byte) {
-}
-
-func (p *GrammarParser) Parse(rdr io.Reader, handler parsers.M3u8Handler) (nBytes int, err error) {
+func (p *GrammarParser) Parse(rdr io.Reader, handler parsers.M3u8Handler, buffer []byte) (nBytes int, err error) {
 	data, err := io.ReadAll(rdr)
 	if err != nil {
 		return len(data), err
 	}
-	return p.ParseData(data, handler)
+	return p.ParseData(data, handler, buffer)
 }
 
-func (p *GrammarParser) ParseData(data []byte, handler parsers.M3u8Handler) (nBytes int, err error) {
+func (p *GrammarParser) ParseData(data []byte, handler parsers.M3u8Handler, buffer []byte) (nBytes int, err error) {
 	origLen := len(data)
 	p.state = readingTag
 	if data[0] != '#' {

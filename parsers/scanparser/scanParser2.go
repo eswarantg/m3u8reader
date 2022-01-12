@@ -16,9 +16,6 @@ type ScanParser2 struct {
 	extHander parsers.M3u8Handler
 }
 
-func (p *ScanParser2) SetBuffer([]byte) {
-}
-
 func (s *ScanParser2) PostRecord(tag common.TagId, kvpairs *parsers.AttrKVPairs) error {
 	var err error
 	if kvpairs != nil {
@@ -33,12 +30,12 @@ func (s *ScanParser2) PostRecord(tag common.TagId, kvpairs *parsers.AttrKVPairs)
 	err = s.extHander.PostRecord(tag, kvpairs)
 	return err
 }
-func (s *ScanParser2) Parse(rdr io.Reader, handler parsers.M3u8Handler) (nBytes int, err error) {
+func (s *ScanParser2) Parse(rdr io.Reader, handler parsers.M3u8Handler, buffer []byte) (nBytes int, err error) {
 	s.extHander = handler
 	return parseM3U8_fast(rdr, s)
 }
 
-func (s *ScanParser2) ParseData(data []byte, handler parsers.M3u8Handler) (nBytes int, err error) {
+func (s *ScanParser2) ParseData(data []byte, handler parsers.M3u8Handler, buffer []byte) (nBytes int, err error) {
 	defer func() {
 		s.extHander = nil
 	}()

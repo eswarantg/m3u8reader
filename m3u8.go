@@ -109,20 +109,14 @@ func (m *M3U8) getParser() parsers.Parser {
 func (m *M3U8) ParseData(data []byte) (n int, err error) {
 	m.Init()
 	p := m.getParser()
-	if m.buffer != nil {
-		p.SetBuffer(m.buffer)
-	}
-	n, err = p.ParseData(data, m)
+	n, err = p.ParseData(data, m, m.buffer)
 	return
 }
 
 func (m *M3U8) Read(src io.Reader) (n int, err error) {
 	m.Init()
 	p := m.getParser()
-	if m.buffer != nil {
-		p.SetBuffer(m.buffer)
-	}
-	n, err = p.Parse(src, m)
+	n, err = p.Parse(src, m, m.buffer)
 	return
 }
 
