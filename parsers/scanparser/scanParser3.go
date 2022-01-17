@@ -27,6 +27,7 @@ type ScanParser3 struct {
 	tag     []byte
 	tagId   common.TagId
 	key     []byte
+	eof     bool
 }
 
 const (
@@ -50,6 +51,7 @@ func (s *ScanParser3) Init() {
 	s.tag = nil
 	s.tagId = common.M3U8UNKNOWNTAG
 	s.key = nil
+	s.eof = false
 }
 
 func (s *ScanParser3) pushState(newState s3_ParsingState) {
@@ -125,7 +127,10 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 		curToken := scan.Bytes()
 		//fmt.Printf("\nToken %v : %v : %v : %v", s.tokenCount, string(curToken), s.state, string(lastToken))
 		if len(curToken) == 0 {
-			continue
+			if !s.eof {
+				continue
+			}
+			curToken = []byte{'\n'}
 		}
 		switch s.state {
 		case s3_WaitingEntryStart:
@@ -179,10 +184,12 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 					s.pushState(s3_ReadingEntryName)
 				} else {
 					err = fmt.Errorf("%v : invalid token %v received when waiting for EntryData", string(s.tag), string(curToken))
+					return s.nBytes, err
 				}
 			case '=':
 				if s.key != nil {
 					err = fmt.Errorf("%v : key already realized %v, invalid token %v received when waiting for EntryData", string(s.tag), string(s.key), string(curToken))
+					return s.nBytes, err
 				}
 				s.key = lastToken
 				lastToken = nil
@@ -203,6 +210,7 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 					attr, ok = common.AttrToAttrId[string(s.key)]
 					if !ok {
 						err = fmt.Errorf("invalid attribute token %v received when waiting for EntryData", string(s.key))
+						return s.nBytes, err
 					}
 					s.postData(attr, lastToken)
 					s.key = nil
@@ -216,11 +224,57 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 			}
 		}
 		if err != nil {
-			break
+			return s.nBytes, err
 		}
 	}
 	if scan.Err() != nil {
 		err = scan.Err()
+	}
+	switch s.state {
+	case s3_ReadingQuote:
+		fallthrough
+	case s3_ReadingEnumeratedString:
+		s.popState()
+	}
+	switch s.state {
+	case s3_WaitingEntryStart:
+		fmt.Printf("%v %v %v", "s3_WaitingEntryStart", s.tag, lastToken)
+	case s3_WaitingEntryName:
+		fmt.Printf("%v %v %v", "s3_WaitingEntryName", s.tag, lastToken)
+		if len(lastToken) > 0 {
+			var ok bool
+			s.tag = lastToken
+			s.tagId, ok = common.TagToTagId[string(lastToken)]
+			if !ok {
+				err = fmt.Errorf("%v : invalid key token %v received when waiting for EntryName", string(s.tag), string(lastToken))
+				return s.nBytes, err
+			}
+		}
+		if len(s.tag) > 0 {
+			s.PostRecord(s.tagId, s.kvpairs)
+		}
+	case s3_WaitingEntryData:
+		fmt.Printf("%v %v %v", "s3_WaitingEntryData", s.tag, lastToken)
+		if len(lastToken) > 0 {
+			if s.key != nil {
+				var attr common.AttrId
+				var ok bool
+				attr, ok = common.AttrToAttrId[string(s.key)]
+				if !ok {
+					err = fmt.Errorf("invalid attribute token %v received when waiting for EntryData", string(s.key))
+					return s.nBytes, err
+				}
+				s.postData(attr, lastToken)
+				s.key = nil
+			} else {
+				s.postData(common.INTUnknownAttr, lastToken)
+			}
+		}
+		if len(s.tag) > 0 {
+			s.PostRecord(s.tagId, s.kvpairs)
+		}
+	default:
+		panic(fmt.Sprintf("Unexpected state : %v", s.state))
 	}
 	if err == nil {
 		if s.key != nil {
@@ -263,6 +317,8 @@ func (s *ScanParser3) splitFunctionMain(data []byte, atEOF bool) (int, []byte, e
 			s.popState()
 			return i, data[0:i], nil
 		}
+		s.eof = true
+		return 0, nil, io.EOF
 	}
 	return 0, nil, nil //need more characters
 }
@@ -283,6 +339,7 @@ func (s *ScanParser3) readQuotedString(data []byte, atEOF bool) (int, []byte, er
 		}
 	}
 	if atEOF {
+		s.eof = true
 		s.nBytes += len(data)
 		s.popState()
 		return 0, nil, errors.New("non-terminated quote string not supported")
@@ -304,6 +361,8 @@ func (s *ScanParser3) readEntryName(data []byte, atEOF bool) (int, []byte, error
 			s.popState()
 			return i, data[0:i], nil
 		}
+		s.eof = true
+		return 0, nil, io.EOF
 	}
 	return 0, nil, nil //need more characters
 }
@@ -322,12 +381,15 @@ func (s *ScanParser3) readEnumeratedString(data []byte, atEOF bool) (int, []byte
 		}
 	}
 	if atEOF {
+		s.eof = true
 		i := len(data)
 		if i > 0 {
 			s.nBytes += i
 			s.popState()
 			return i, data[0:i], nil
 		}
+		s.eof = true
+		return 0, nil, io.EOF
 	}
 	return 0, nil, nil //need more characters
 }

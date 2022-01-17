@@ -121,6 +121,7 @@ func Test_M3u83(t *testing.T) {
 		//"test/tv5.m3u8",
 		//"test/tv5_TS-50002_1_video.m3u8",
 		"test/master.m3u8",
+		"test/master1.m3u8",
 		"test/sub.m3u8",
 	}
 	parsers.AttrKVPairsSyncPool = true
