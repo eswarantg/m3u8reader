@@ -238,9 +238,9 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 	}
 	switch s.state {
 	case s3_WaitingEntryStart:
-		fmt.Printf("%v %v %v", "s3_WaitingEntryStart", s.tag, lastToken)
+		//fmt.Printf("%v %v %v", "s3_WaitingEntryStart", s.tag, lastToken)
 	case s3_WaitingEntryName:
-		fmt.Printf("%v %v %v", "s3_WaitingEntryName", s.tag, lastToken)
+		//fmt.Printf("%v %v %v", "s3_WaitingEntryName", s.tag, lastToken)
 		if len(lastToken) > 0 {
 			var ok bool
 			s.tag = lastToken
@@ -254,7 +254,7 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 			s.PostRecord(s.tagId, s.kvpairs)
 		}
 	case s3_WaitingEntryData:
-		fmt.Printf("%v %v %v", "s3_WaitingEntryData", s.tag, lastToken)
+		//fmt.Printf("%v %v %v", "s3_WaitingEntryData", s.tag, lastToken)
 		if len(lastToken) > 0 {
 			if s.key != nil {
 				var attr common.AttrId
