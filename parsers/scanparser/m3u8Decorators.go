@@ -1,8 +1,11 @@
 package scanparser
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/eswarantg/m3u8reader/common"
@@ -71,6 +74,11 @@ func decorateM3U8ExtXPart(kv parsers.AttrKVPairs) (err error) {
 	if err != nil {
 		return
 	}
+	attrs = []common.AttrId{common.M3U8ByteRange}
+	err = convertToByteRange(kv, attrs, tagId, true) //optional
+	if err != nil {
+		return
+	}
 	attrs = []common.AttrId{common.M3U8Duration}
 	err = convertToFloat64(kv, attrs, tagId, false)
 	return
@@ -86,7 +94,7 @@ func decorateM3U8ExtXMediaSequence(kv parsers.AttrKVPairs) (err error) {
 func decorateM3U8ExtXPartInf(kv parsers.AttrKVPairs) (err error) {
 	tagId := common.M3U8ExtXPartInf
 	attrs := []common.AttrId{common.M3U8PartTarget}
-	err = convertToFloat64(kv, attrs, tagId, true)
+	err = convertToFloat64(kv, attrs, tagId, true) //optional
 	return
 }
 
@@ -94,6 +102,11 @@ func decorateM3U8ExtXRenditionReport(kv parsers.AttrKVPairs) (err error) {
 	tagId := common.M3U8ExtXRenditionReport
 	attrs := []common.AttrId{common.M3U8LastMsn, common.M3U8LastPart}
 	err = convertToInt64(kv, attrs, tagId, false)
+	if err != nil {
+		return
+	}
+	attrs = []common.AttrId{common.M3U8ByteRangeStart}
+	err = convertToInt64(kv, attrs, tagId, true) //optional
 	return
 }
 
@@ -185,6 +198,46 @@ func convertToInt64(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId commo
 			kv.Store(attrId, newVal)
 		} else if !optional {
 			return fmt.Errorf("missing Int value %v[%v", common.TagNames[tagId], common.AttrNames[attrId])
+		}
+	}
+	return nil
+}
+func convertToByteRange(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId common.TagId, optional bool) error {
+	var newVal [2]int64
+	var err error
+	for _, attrId := range attrIds {
+		if val := kv.Get(attrId); val != nil {
+			switch v := val.(type) {
+			case []byte:
+				parts := bytes.Split(v, []byte{'@'})
+				if len(parts) != 2 {
+					err = errors.New("two part byteRange expected with @ seperator")
+					break
+				}
+				newVal[0], err = strconv.ParseInt(string(parts[0]), 10, 64)
+				if err == nil {
+					newVal[1], err = strconv.ParseInt(string(parts[1]), 10, 64)
+				}
+			case string:
+				parts := strings.Split(v, "@")
+				if len(parts) != 2 {
+					err = errors.New("two part byteRange expected with @ seperator")
+					break
+				}
+				newVal[0], err = strconv.ParseInt(parts[0], 10, 64)
+				if err == nil {
+					newVal[1], err = strconv.ParseInt(parts[1], 10, 64)
+				}
+			default:
+				panic(fmt.Sprintf("\nconvertToByteRange %v:%v is %T(\"%v\") not string", common.TagNames[tagId], common.AttrNames[attrId], v, v))
+			}
+			if err != nil {
+				return fmt.Errorf("%v invalid byteRange %v=\"%v\" - %v", common.TagNames[tagId],
+					common.AttrNames[attrId], val, err.Error())
+			}
+			kv.Store(attrId, newVal)
+		} else if !optional {
+			return fmt.Errorf("missing byteRange value %v[%v", common.TagNames[tagId], common.AttrNames[attrId])
 		}
 	}
 	return nil

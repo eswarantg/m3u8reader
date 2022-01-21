@@ -53,7 +53,8 @@ func ReadFile(path string, t *testing.T) ([]byte, error) {
 func Test_MediaM3u8(t *testing.T) {
 	var hdlr parsers.M3u8Handler
 	files := [...]string{
-		"../test/sub.m3u8",
+		"../test/media_bytes.m3u8",
+		//"../test/sub.m3u8",
 	}
 	buffer := make([]byte, 4096)
 	for _, file := range files {
@@ -117,8 +118,8 @@ func Test_MediaM3u8(t *testing.T) {
 func Test_MasterM3u8(t *testing.T) {
 	var hdlr parsers.M3u8Handler
 	var files = [...]string{
+		"../test/master_bytes.m3u8",
 		"../test/master1.m3u8",
-		"../test/manifest.m3u8",
 	}
 	buffer := make([]byte, 4096)
 	for _, file := range files {
