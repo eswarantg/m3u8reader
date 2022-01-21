@@ -159,6 +159,20 @@ func (a *AttrKVPairs) GetTime(t common.TagId, k common.AttrId) (ret time.Time, e
 	return
 }
 
+func (a *AttrKVPairs) GetByteRange(t common.TagId, k common.AttrId) (ret [2]int64, err error) {
+	val := a.Get(k)
+	if val == nil {
+		err = fmt.Errorf("%v:%v not found", common.TagNames[t], common.AttrNames[k])
+		return
+	}
+	switch v := val.(type) {
+	case [2]int64:
+		return v, nil
+	}
+	err = fmt.Errorf("%v:%v expected [2]int64 found of data type %v", common.TagNames[t], common.AttrNames[k], reflect.ValueOf(val).Kind())
+	return
+}
+
 func (a *AttrKVPairs) GetString(t common.TagId, k common.AttrId) (ret string, err error) {
 	val := a.Get(k)
 	if val == nil {
