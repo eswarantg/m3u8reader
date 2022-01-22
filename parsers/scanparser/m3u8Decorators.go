@@ -124,6 +124,13 @@ func decorateM3U8XSkip(kv parsers.AttrKVPairs) (err error) {
 	return
 }
 
+func decorateM3U8ExtXPreLoadHint(kv parsers.AttrKVPairs) (err error) {
+	tagId := common.M3U8ExtXPreLoadHint
+	attrs := []common.AttrId{common.M3U8ByteRangeStart}
+	err = convertToInt64(kv, attrs, tagId, false)
+	return
+}
+
 var decorators = map[common.TagId]func(kv parsers.AttrKVPairs) error{
 	common.M3U8ExtXVersion:          decorateM3U8ExtXVersion,
 	common.M3U8TargetDuration:       decorateM3U8TargetDuration,
@@ -137,6 +144,7 @@ var decorators = map[common.TagId]func(kv parsers.AttrKVPairs) error{
 	common.M3U8ExtXRenditionReport:  decorateM3U8ExtXRenditionReport,
 	common.M3U8ExtXServerControl:    decorateM3U8ExtXServerControl,
 	common.M3U8XSkip:                decorateM3U8XSkip,
+	common.M3U8ExtXPreLoadHint:      decorateM3U8ExtXPreLoadHint,
 }
 
 func decorateEntry(tag common.TagId, kv parsers.AttrKVPairs) (err error) {

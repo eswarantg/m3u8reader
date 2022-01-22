@@ -79,9 +79,9 @@ func Test_M3u82(t *testing.T) {
 */
 func Test_M3u813(t *testing.T) {
 	tests := []string{
-		//"test/ll_hls_byte_range.m3u8",
-		//"test/ll_hls_delta_update.m3u8",
-		//"test/ll_hls_pl.m3u8",
+		"test/ll_hls_byte_range.m3u8",
+		"test/ll_hls_delta_update.m3u8",
+		"test/ll_hls_pl.m3u8",
 		"test/index_new.m3u8",
 		"test/index_new_Variant_450k.m3u8",
 		"test/tv5.m3u8",

@@ -36,6 +36,7 @@ const (
 	s3_ReadingEnumeratedString
 	s3_ReadingAnyString
 	s3_ReadingEntryName
+	s3_ReadingIgnoredLine
 	s3_WaitingEntryStart
 	s3_WaitingEntryName
 	s3_WaitingEntryData
@@ -149,19 +150,22 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 		case s3_WaitingEntryName:
 			switch curToken[0] {
 			case ':':
-				s.popState()
-				s.pushState(s3_WaitingEntryData)
-				s.pushState(s3_ReadingEnumeratedString)
-				lastToken = nil
+				if s.tag != nil {
+					s.popState()
+					s.pushState(s3_WaitingEntryData)
+					s.pushState(s3_ReadingEnumeratedString)
+					lastToken = nil
+				}
 			case '\n':
 				if s.tag != nil {
 					s.PostRecord(s.tagId, s.kvpairs)
-					s.tag = nil
-					s.kvpairs = parsers.NewAttrKVPairs()
-					s.popState()
-					s.pushState(s3_WaitingEntryStart)
 				}
-				//ignore empty line
+				s.tag = nil
+				s.kvpairs = parsers.NewAttrKVPairs()
+				s.popState()
+				s.pushState(s3_WaitingEntryStart)
+				lastToken = nil
+				//ignore empty/commented line
 			case '#', '=', ',':
 				err = fmt.Errorf(" %v unexpected token %v received when waiting for EntryName", string(s.tag), string(curToken))
 			default:
@@ -169,7 +173,9 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 				s.tag = curToken
 				s.tagId, ok = common.TagToTagId[string(curToken)]
 				if !ok {
-					err = fmt.Errorf("%v : invalid key token %v received when waiting for EntryName", string(s.tag), string(curToken))
+					s.tag = nil
+					s.pushState(s3_ReadingIgnoredLine)
+					//ignore any line that is commented without valid key
 				}
 			}
 		case s3_WaitingEntryData:
@@ -246,8 +252,8 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 			s.tag = lastToken
 			s.tagId, ok = common.TagToTagId[string(lastToken)]
 			if !ok {
-				err = fmt.Errorf("%v : invalid key token %v received when waiting for EntryName", string(s.tag), string(lastToken))
-				return s.nBytes, err
+				s.tag = nil
+				//ignore the line ... might be some comment line
 			}
 		}
 		if len(s.tag) > 0 {
@@ -303,6 +309,8 @@ func (s *ScanParser3) splitFunctionMain(data []byte, atEOF bool) (int, []byte, e
 		return s.readEntryName(data, atEOF)
 	case s3_ReadingAnyString:
 		return s.readAnyString(data, atEOF)
+	case s3_ReadingIgnoredLine:
+		return s.readIgnoredLine(data, atEOF)
 	}
 	for i, ch := range data {
 		if ch == '#' || ch == ':' || ch == '=' || ch == ',' || ch == '\n' {
@@ -349,6 +357,27 @@ func (s *ScanParser3) readQuotedString(data []byte, atEOF bool) (int, []byte, er
 func (s *ScanParser3) readEntryName(data []byte, atEOF bool) (int, []byte, error) {
 	for i, ch := range data {
 		if ch == '\r' || ch == '\n' || ch == ':' {
+			s.nBytes += i
+			s.popState()
+			return i, data[0:i], nil
+		}
+	}
+	if atEOF {
+		i := len(data)
+		if i > 0 {
+			s.nBytes += i
+			s.popState()
+			return i, data[0:i], nil
+		}
+		s.eof = true
+		return 0, nil, io.EOF
+	}
+	return 0, nil, nil //need more characters
+}
+
+func (s *ScanParser3) readIgnoredLine(data []byte, atEOF bool) (int, []byte, error) {
+	for i, ch := range data {
+		if ch == '\r' || ch == '\n' {
 			s.nBytes += i
 			s.popState()
 			return i, data[0:i], nil
