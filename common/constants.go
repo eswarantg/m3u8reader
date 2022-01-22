@@ -153,6 +153,7 @@ var AttrNames = [...]string{
 	"VALUE",
 	"TITLE",
 	"BYTERANGE-START",
+	"BYTERANGE-LENGTH",
 	"#",
 	"programDataTime",
 	"mediaSequenceNumber",
@@ -214,6 +215,7 @@ const (
 	M3U8Value
 	M3U8Title
 	M3U8ByteRangeStart
+	M3U8ByteRangeLength
 	INTUnknownAttr
 	INTProgramDateTime
 	INTMediaSequenceNumber
@@ -272,6 +274,7 @@ var AttrToAttrId map[string]AttrId = map[string]AttrId{
 	"VALUE":               M3U8Value,
 	"TITLE":               M3U8Title,
 	"BYTERANGE-START":     M3U8ByteRangeStart,
+	"BYTERANGE-LENGTH":    M3U8ByteRangeLength,
 	"#":                   INTUnknownAttr,
 	"programDataTime":     INTProgramDateTime,
 	"mediaSequenceNumber": INTMediaSequenceNumber,

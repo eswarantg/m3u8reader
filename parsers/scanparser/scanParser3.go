@@ -106,12 +106,15 @@ func (s *ScanParser3) ParseData(data []byte, handler parsers.M3u8Handler, buffer
 }
 
 func (s *ScanParser3) postData(key common.AttrId, token []byte) error {
-	if key == common.INTUnknownAttr && s.kvpairs.Exists(common.INTUnknownAttr) {
-		switch s.tagId {
-		case common.M3U8ExtInf:
-			key = common.M3U8Uri
-		default:
-			return fmt.Errorf("duplicate INTUnknownAttr for %v required", string(s.tag))
+	if key == common.INTUnknownAttr {
+		//fmt.Fprintf(os.Stdout, "\n%v:%v", string(s.tag), string(token))
+		if s.kvpairs.Exists(common.INTUnknownAttr) {
+			switch s.tagId {
+			case common.M3U8ExtInf:
+				key = common.M3U8Uri
+			default:
+				return fmt.Errorf("duplicate INTUnknownAttr for %v required", string(s.tag))
+			}
 		}
 	}
 	s.kvpairs.Store(key, string(token))
@@ -158,7 +161,10 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 				}
 			case '\n':
 				if s.tag != nil {
-					s.PostRecord(s.tagId, s.kvpairs)
+					err = s.PostRecord(s.tagId, s.kvpairs)
+					if err != nil {
+						return s.nBytes, err
+					}
 				}
 				s.tag = nil
 				s.kvpairs = parsers.NewAttrKVPairs()
@@ -182,7 +188,10 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 			switch curToken[0] {
 			case '#':
 				if s.tag != nil && lastToken[0] == '\n' {
-					s.PostRecord(s.tagId, s.kvpairs)
+					err = s.PostRecord(s.tagId, s.kvpairs)
+					if err != nil {
+						return s.nBytes, err
+					}
 					s.tag = nil
 					s.kvpairs = parsers.NewAttrKVPairs()
 					s.popState()
@@ -201,15 +210,21 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 				lastToken = nil
 				s.pushState(s3_ReadingAnyString)
 			case '\n':
+				//fmt.Fprintf(os.Stdout, "\nNEWLINE:%v", string(lastToken))
 				if lastToken[0] == '\n' && s.tag != nil {
-					s.PostRecord(s.tagId, s.kvpairs)
+					err = s.PostRecord(s.tagId, s.kvpairs)
+					if err != nil {
+						return s.nBytes, err
+					}
 					s.tag = nil
 					s.kvpairs = parsers.NewAttrKVPairs()
 					s.popState()
 					s.pushState(s3_WaitingEntryStart)
+					continue
 				}
 				fallthrough
 			case ',':
+				//fmt.Fprintf(os.Stdout, "\nVALUE:%v", string(lastToken))
 				if s.key != nil {
 					var attr common.AttrId
 					var ok bool
@@ -218,10 +233,18 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 						err = fmt.Errorf("invalid attribute token %v received when waiting for EntryData", string(s.key))
 						return s.nBytes, err
 					}
-					s.postData(attr, lastToken)
+					err = s.postData(attr, lastToken)
+					if err != nil {
+						return s.nBytes, err
+					}
 					s.key = nil
+					lastToken = nil
 				} else {
-					s.postData(common.INTUnknownAttr, lastToken)
+					err = s.postData(common.INTUnknownAttr, lastToken)
+					if err != nil {
+						return s.nBytes, err
+					}
+					lastToken = nil
 				}
 				lastToken = curToken
 				s.pushState(s3_ReadingEnumeratedString)
@@ -257,11 +280,14 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 			}
 		}
 		if len(s.tag) > 0 {
-			s.PostRecord(s.tagId, s.kvpairs)
+			err = s.PostRecord(s.tagId, s.kvpairs)
+			if err != nil {
+				return s.nBytes, err
+			}
 		}
 	case s3_WaitingEntryData:
-		//fmt.Printf("%v %v %v", "s3_WaitingEntryData", s.tag, lastToken)
-		if len(lastToken) > 0 {
+		//fmt.Printf("%v %v %v", "s3_WaitingEntryData", string(s.tag), string(lastToken))
+		if len(lastToken) > 0 && lastToken[0] != '\n' {
 			if s.key != nil {
 				var attr common.AttrId
 				var ok bool
@@ -270,14 +296,25 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 					err = fmt.Errorf("invalid attribute token %v received when waiting for EntryData", string(s.key))
 					return s.nBytes, err
 				}
-				s.postData(attr, lastToken)
+				err = s.postData(attr, lastToken)
+				if err != nil {
+					return s.nBytes, err
+				}
+				lastToken = nil
 				s.key = nil
 			} else {
-				s.postData(common.INTUnknownAttr, lastToken)
+				err = s.postData(common.INTUnknownAttr, lastToken)
+				if err != nil {
+					return s.nBytes, err
+				}
+				lastToken = nil
 			}
 		}
 		if len(s.tag) > 0 {
-			s.PostRecord(s.tagId, s.kvpairs)
+			err = s.PostRecord(s.tagId, s.kvpairs)
+			if err != nil {
+				return s.nBytes, err
+			}
 		}
 	default:
 		panic(fmt.Sprintf("Unexpected state : %v", s.state))
@@ -289,11 +326,22 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 			attr, ok = common.AttrToAttrId[string(s.key)]
 			if !ok {
 				err = fmt.Errorf("invalid attribute token %v received when waiting for EntryData", string(s.key))
+				return s.nBytes, err
 			}
-			s.postData(attr, lastToken)
+			err = s.postData(attr, lastToken)
+			if err != nil {
+				return s.nBytes, err
+			}
+			lastToken = nil
 			s.key = nil
 		} else {
-			s.postData(common.INTUnknownAttr, lastToken)
+			if len(lastToken) > 0 && lastToken[0] != '\n' {
+				err = s.postData(common.INTUnknownAttr, lastToken)
+				if err != nil {
+					return s.nBytes, err
+				}
+				lastToken = nil
+			}
 		}
 	}
 	return s.nBytes, err

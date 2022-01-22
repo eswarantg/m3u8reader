@@ -126,8 +126,13 @@ func decorateM3U8XSkip(kv parsers.AttrKVPairs) (err error) {
 
 func decorateM3U8ExtXPreLoadHint(kv parsers.AttrKVPairs) (err error) {
 	tagId := common.M3U8ExtXPreLoadHint
-	attrs := []common.AttrId{common.M3U8ByteRangeStart}
-	err = convertToInt64(kv, attrs, tagId, false)
+	attrs := []common.AttrId{common.M3U8Uri}
+	err = checkExists(kv, attrs, tagId)
+	if err != nil {
+		return
+	}
+	attrs = []common.AttrId{common.M3U8ByteRangeStart, common.M3U8ByteRangeLength}
+	err = convertToInt64(kv, attrs, tagId, true) //optional
 	return
 }
 
@@ -155,9 +160,9 @@ func decorateEntry(tag common.TagId, kv parsers.AttrKVPairs) (err error) {
 }
 
 func checkExists(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId common.TagId) error {
-	for _, attr := range attrIds {
-		if val := kv.Get(attr); val == nil {
-			return fmt.Errorf("%v missing %v value", tagId, common.AttrNames[attr])
+	for _, attrId := range attrIds {
+		if val := kv.Get(attrId); val == nil {
+			return fmt.Errorf("missing \"%v\":\"%v\" value", common.TagNames[tagId], common.AttrNames[attrId])
 		}
 	}
 	return nil
@@ -173,15 +178,16 @@ func convertToFloat64(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId com
 			case string:
 				newVal, err = strconv.ParseFloat(v, 64)
 			default:
-				panic(fmt.Sprintf("\nconvertToFloat64 %v:%v is %T(\"%v\") not string", common.TagNames[tagId], common.AttrNames[attrId], v, v))
+				panic(fmt.Sprintf("\nconvertToFloat64 \"%v\":\"%v\" is %T(\"%v\") not string", common.TagNames[tagId],
+					common.AttrNames[attrId], v, v))
 			}
 			if err != nil {
-				return fmt.Errorf("%v invalid Float value %v=\"%v\" - %v", common.TagNames[tagId],
+				return fmt.Errorf("invalid Float value \"%v\":\"%v\"=\"%v\" - \"%v\"", common.TagNames[tagId],
 					common.AttrNames[attrId], val, err.Error())
 			}
 			kv.Store(attrId, newVal)
 		} else if !optional {
-			return fmt.Errorf("missing Float value %v[\"%v\"]", common.TagNames[tagId], common.AttrNames[attrId])
+			return fmt.Errorf("missing \"%v\":\"%v\" Float value", common.TagNames[tagId], common.AttrNames[attrId])
 		}
 	}
 	return nil
@@ -197,20 +203,47 @@ func convertToInt64(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId commo
 			case string:
 				newVal, err = strconv.ParseInt(v, 10, 64)
 			default:
-				panic(fmt.Sprintf("\nconvertToFloat64 %v:%v is %T(\"%v\") not string", common.TagNames[tagId], common.AttrNames[attrId], v, v))
+				panic(fmt.Sprintf("\nconvertToInt64 \"%v\":\"%v\" is %T(\"%v\") not string", common.TagNames[tagId],
+					common.AttrNames[attrId], v, v))
 			}
 			if err != nil {
-				return fmt.Errorf("%v invalid Intvalue %v=\"%v\" - %v", common.TagNames[tagId],
+				return fmt.Errorf("invalid Int value \"%v\":\"%v\"=\"%v\" - \"%v\"", common.TagNames[tagId],
 					common.AttrNames[attrId], val, err.Error())
 			}
 			kv.Store(attrId, newVal)
 		} else if !optional {
-			return fmt.Errorf("missing Int value %v[%v", common.TagNames[tagId], common.AttrNames[attrId])
+			return fmt.Errorf("missing \"%v\":\"%v\" Int value", common.TagNames[tagId], common.AttrNames[attrId])
 		}
 	}
 	return nil
 }
 func convertToByteRange(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId common.TagId, optional bool) error {
+	//Ref: https://datatracker.ietf.org/doc/html/draft-pantos-hls-rfc8216bis#section-4.4.4.2
+
+	//	#EXT-X-BYTERANGE:<n>[@<o>]
+
+	//   where n is a decimal-integer indicating the length of the sub-range
+	//in bytes.  If present, o is a decimal-integer indicating the start of
+	//the sub-range, as a byte offset from the beginning of the resource.
+	//If o is not present, the sub-range begins at the next byte following
+	//the sub-range of the previous Media Segment.
+
+	//If o is not present, a previous Media Segment MUST appear in the
+	//Playlist file and MUST be a sub-range of the same media resource, or
+	//the Media Segment is undefined and the client MUST fail to parse the
+	//Playlist.
+
+	//https://datatracker.ietf.org/doc/html/draft-pantos-hls-rfc8216bis#section-4.4.4.9
+	//EXT-X-PART
+	//BYTERANGE
+
+	//The value is a quoted-string specifying a byte range into the
+	//resource identified by the URI attribute.  This range SHOULD
+	//contain only the Media Initialization Section.  The format of the
+	//byte range is described in Section 4.4.4.2.  This attribute is
+	//OPTIONAL; if it is not present, the byte range is the entire
+	//resource indicated by the URI.
+
 	var newVal [2]int64
 	var err error
 	for _, attrId := range attrIds {
@@ -218,34 +251,46 @@ func convertToByteRange(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId c
 			switch v := val.(type) {
 			case []byte:
 				parts := bytes.Split(v, []byte{'@'})
-				if len(parts) != 2 {
-					err = errors.New("two part byteRange expected with @ seperator")
-					break
-				}
-				newVal[0], err = strconv.ParseInt(string(parts[0]), 10, 64)
-				if err == nil {
+				switch len(parts) {
+				case 2:
 					newVal[1], err = strconv.ParseInt(string(parts[1]), 10, 64)
+					if err != nil {
+						break
+					}
+					newVal[0], err = strconv.ParseInt(string(parts[0]), 10, 64)
+				case 1:
+					err = errors.New("byteRange with 1 part not supported, expect n@o")
+					//newVal[1] = 0
+					//newVal[0], err = strconv.ParseInt(string(parts[0]), 10, 64)
+				default:
+					err = errors.New("byteRange expected 1 part or 2 parts with @ seperator")
 				}
 			case string:
 				parts := strings.Split(v, "@")
-				if len(parts) != 2 {
-					err = errors.New("two part byteRange expected with @ seperator")
-					break
-				}
-				newVal[0], err = strconv.ParseInt(parts[0], 10, 64)
-				if err == nil {
+				switch len(parts) {
+				case 2:
 					newVal[1], err = strconv.ParseInt(parts[1], 10, 64)
+					if err != nil {
+						break
+					}
+					newVal[0], err = strconv.ParseInt(parts[0], 10, 64)
+				case 1:
+					newVal[1] = -1
+					newVal[0], err = strconv.ParseInt(parts[0], 10, 64)
+				default:
+					err = errors.New("byteRange expected 1 part or 2 parts with @ seperator")
 				}
 			default:
-				panic(fmt.Sprintf("\nconvertToByteRange %v:%v is %T(\"%v\") not string", common.TagNames[tagId], common.AttrNames[attrId], v, v))
+				panic(fmt.Sprintf("\nconvertToByteRange \"%v\":\"%v\" is %T(\"%v\") not string", common.TagNames[tagId],
+					common.AttrNames[attrId], v, v))
 			}
 			if err != nil {
-				return fmt.Errorf("%v invalid byteRange %v=\"%v\" - %v", common.TagNames[tagId],
+				return fmt.Errorf("invalid byteRange value \"%v\":\"%v\"=\"%v\" - \"%v\"", common.TagNames[tagId],
 					common.AttrNames[attrId], val, err.Error())
 			}
 			kv.Store(attrId, newVal)
 		} else if !optional {
-			return fmt.Errorf("missing byteRange value %v[%v", common.TagNames[tagId], common.AttrNames[attrId])
+			return fmt.Errorf("missing \"%v\":\"%v\" byteRange value", common.TagNames[tagId], common.AttrNames[attrId])
 		}
 	}
 	return nil
@@ -261,15 +306,16 @@ func convertToTime(kv parsers.AttrKVPairs, attrIds []common.AttrId, tagId common
 			case string:
 				newVal, err = time.Parse(time.RFC3339Nano, v)
 			default:
-				panic(fmt.Sprintf("\nconvertToFloat64 %v:%v is %T(\"%v\") not string", common.TagNames[tagId], common.AttrNames[attrId], v, v))
+				panic(fmt.Sprintf("\nconvertToTime %v:%v is %T(\"%v\") not string", common.TagNames[tagId],
+					common.AttrNames[attrId], v, v))
 			}
 			if err != nil {
-				return fmt.Errorf("%v invalid Time value %v=\"%v\" - %v", common.TagNames[tagId],
+				return fmt.Errorf("invalid Time value \"%v\":\"%v\"=\"%v\" - \"%v\"", common.TagNames[tagId],
 					common.AttrNames[attrId], val, err.Error())
 			}
 			kv.Store(attrId, newVal)
 		} else if !optional {
-			return fmt.Errorf("missing Time value %v[%v", common.TagNames[tagId], common.AttrNames[attrId])
+			return fmt.Errorf("missing \"%v\":\"%v\" Time value", common.TagNames[tagId], common.AttrNames[attrId])
 		}
 	}
 	return nil
