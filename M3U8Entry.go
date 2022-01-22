@@ -30,7 +30,7 @@ func (m *M3U8Entry) URI() (string, error) {
 	switch m.Tag {
 	case common.M3U8ExtXStreamInf:
 		attrId = common.INTUnknownAttr
-	case common.M3U8ExtXMedia, common.M3U8ExtInf, common.M3U8ExtXPreLoadHint:
+	case common.M3U8ExtXMedia, common.M3U8ExtInf, common.M3U8ExtXPreLoadHint, common.M3U8ExtXPart:
 		attrId = common.M3U8Uri
 	}
 	if attrId != -1 {
