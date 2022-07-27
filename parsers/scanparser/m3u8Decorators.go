@@ -41,7 +41,7 @@ func decorateM3U8ExtXStreamInf(kv parsers.AttrKVPairs) (err error) {
 func decorateM3U8ExtXMedia(kv parsers.AttrKVPairs) (err error) {
 	tagId := common.M3U8ExtXMedia
 	attrs := []common.AttrId{
-		common.M3U8Uri, common.M3U8Type,
+		common.M3U8Type,
 		common.M3U8Language, common.M3U8GroupId,
 	}
 	err = checkExists(kv, attrs, tagId)
