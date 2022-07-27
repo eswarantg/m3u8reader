@@ -266,6 +266,8 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 		s.popState()
 	}
 	switch s.state {
+	case s3_ReadingIgnoredLine:
+		//fmt.Printf("%v %v %v", "s3_ReadingIgnoredLine", s.tag, lastToken)
 	case s3_WaitingEntryStart:
 		//fmt.Printf("%v %v %v", "s3_WaitingEntryStart", s.tag, lastToken)
 	case s3_WaitingEntryName:
