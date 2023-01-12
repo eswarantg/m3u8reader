@@ -34,6 +34,7 @@ const (
 	s3_UndefinedState s3_ParsingState = iota
 	s3_ReadingQuote
 	s3_ReadingEnumeratedString
+	s3_ReadingEnumeratedStringLine
 	s3_ReadingAnyString
 	s3_ReadingEntryName
 	s3_ReadingIgnoredLine
@@ -247,7 +248,11 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 					lastToken = nil
 				}
 				lastToken = curToken
-				s.pushState(s3_ReadingEnumeratedString)
+				if curToken[0] == ',' {
+					s.pushState(s3_ReadingEnumeratedString)
+				} else {
+					s.pushState(s3_ReadingEnumeratedStringLine)
+				}
 			default:
 				lastToken = curToken
 			}
@@ -262,7 +267,7 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 	switch s.state {
 	case s3_ReadingQuote:
 		fallthrough
-	case s3_ReadingEnumeratedString:
+	case s3_ReadingEnumeratedString, s3_ReadingEnumeratedStringLine:
 		s.popState()
 	}
 	switch s.state {
@@ -353,6 +358,8 @@ func (s *ScanParser3) splitFunctionMain(data []byte, atEOF bool) (int, []byte, e
 		return s.readQuotedString(data, atEOF)
 	case s3_ReadingEnumeratedString:
 		return s.readEnumeratedString(data, atEOF)
+	case s3_ReadingEnumeratedStringLine:
+		return s.readEnumeratedStringLine(data, atEOF)
 	case s3_ReadingEntryName:
 		return s.readEntryName(data, atEOF)
 	case s3_ReadingAnyString:
@@ -470,6 +477,34 @@ func (s *ScanParser3) readEnumeratedString(data []byte, atEOF bool) (int, []byte
 	}
 	return 0, nil, nil //need more characters
 }
+func (s *ScanParser3) readEnumeratedStringLine(data []byte, atEOF bool) (int, []byte, error) {
+	for i, ch := range data {
+		if ch == '\r' || ch == '\n' {
+			s.nBytes += i
+			s.popState()
+			//don't include the delimiter
+			//read = i (adjust for ZERO st value of i)...
+			return i, data[0:i], nil
+		} else if ch == ' ' || ch == '"' {
+			s.nBytes += i
+			s.popState()
+			return 0, nil, fmt.Errorf("unexpected char (%v) reading enumerated string", ch)
+		}
+	}
+	if atEOF {
+		s.eof = true
+		i := len(data)
+		if i > 0 {
+			s.nBytes += i
+			s.popState()
+			return i, data[0:i], nil
+		}
+		s.eof = true
+		return 0, nil, io.EOF
+	}
+	return 0, nil, nil //need more characters
+}
+
 func (s *ScanParser3) readAnyString(data []byte, atEOF bool) (int, []byte, error) {
 	if data[0] == '"' {
 		s.replaceState(s3_ReadingQuote)
