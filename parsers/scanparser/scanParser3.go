@@ -248,10 +248,12 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 					lastToken = nil
 				}
 				lastToken = curToken
-				if curToken[0] == ',' {
-					s.pushState(s3_ReadingEnumeratedString)
-				} else {
-					s.pushState(s3_ReadingEnumeratedStringLine)
+				if curToken[0] == ',' || curToken[0] == '\n' {
+					if !(string(s.tag) == "EXT-X-STREAM-INF" && curToken[0] == '\n') || s.kvpairs.Exists(52) {
+						s.pushState(s3_ReadingEnumeratedString)
+					} else {
+						s.pushState(s3_ReadingEnumeratedStringLine)
+					}
 				}
 			default:
 				lastToken = curToken
