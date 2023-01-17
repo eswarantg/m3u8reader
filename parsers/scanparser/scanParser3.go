@@ -479,7 +479,11 @@ func (s *ScanParser3) readEnumeratedString(data []byte, atEOF bool) (int, []byte
 }
 func (s *ScanParser3) readEnumeratedStringLine(data []byte, atEOF bool) (int, []byte, error) {
 	for i, ch := range data {
-		if ch == '\r' || ch == '\n' {
+		//Handle # as irst character of following line as seperate token
+		if ch == '#' && i == 0 {
+			s.popState()
+			return 0, data[0:0], nil
+		} else if ch == '\r' || ch == '\n' {
 			s.nBytes += i
 			s.popState()
 			//don't include the delimiter
