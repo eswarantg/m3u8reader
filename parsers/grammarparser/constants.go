@@ -45,7 +45,7 @@ var tagMeta = [...]TagMeta{
 	}, attrs: []common.AttrId{common.M3U8Bandwidth,
 		common.M3U8AverageBandwidth, common.M3U8Codecs, common.M3U8Resolution, common.M3U8FrameRate,
 		common.M3U8HdcpLevel, common.M3U8Audio, common.M3U8Video, common.M3U8Subtitles,
-		common.M3U8ClosedCaptions}},
+		common.M3U8ClosedCaptions, common.M3U8ProgramId}},
 	{tag: common.M3U8TargetDuration, openTypes: []OpenType{
 		{types: valueDecimalInt, attr: common.INTUnknownAttr},
 	}, attrs: nil},
@@ -149,4 +149,5 @@ var attrMeta = [...]AttrMeta{
 	{attr: common.M3U8DataId, types: nil},
 	{attr: common.M3U8Value, types: nil},
 	{attr: common.M3U8Title, types: nil},
+	{attr: common.M3U8ProgramId, types: []ValueType{valueDecimalInt}},
 }

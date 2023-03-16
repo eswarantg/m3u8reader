@@ -158,6 +158,7 @@ var AttrNames = [...]string{
 	"programDataTime",
 	"mediaSequenceNumber",
 	"partNumber",
+	"PROGRAM-ID",
 }
 
 //To avoid storing/comparing Attr
@@ -220,6 +221,7 @@ const (
 	INTProgramDateTime
 	INTMediaSequenceNumber
 	INTPartNumber
+	M3U8ProgramId
 )
 
 var AttrToAttrId map[string]AttrId = map[string]AttrId{
@@ -279,4 +281,5 @@ var AttrToAttrId map[string]AttrId = map[string]AttrId{
 	"programDataTime":     INTProgramDateTime,
 	"mediaSequenceNumber": INTMediaSequenceNumber,
 	"partNumber":          INTPartNumber,
+	"PROGRAM-ID":          M3U8ProgramId,
 }
