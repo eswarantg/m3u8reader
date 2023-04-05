@@ -177,7 +177,7 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 				err = fmt.Errorf(" %v unexpected token %v received when waiting for EntryName", string(s.tag), string(curToken))
 			default:
 				var ok bool
-				s.tag = curToken
+				s.tag = bytes.Clone(curToken)
 				s.tagId, ok = common.TagToTagId[string(curToken)]
 				if !ok {
 					s.tag = nil
@@ -247,14 +247,14 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 					}
 					lastToken = nil
 				}
-				lastToken = curToken
+				lastToken = bytes.Clone(curToken)
 				if curToken[0] == ',' {
 					s.pushState(s3_ReadingEnumeratedString)
 				} else {
 					s.pushState(s3_ReadingEnumeratedStringLine)
 				}
 			default:
-				lastToken = curToken
+				lastToken = bytes.Clone(curToken)
 			}
 		}
 		if err != nil {
@@ -277,7 +277,7 @@ func (s *ScanParser3) parse(scan *bufio.Scanner, handler parsers.M3u8Handler) (n
 		//fmt.Printf("%v %v %v", "s3_WaitingEntryName", s.tag, lastToken)
 		if len(lastToken) > 0 {
 			var ok bool
-			s.tag = lastToken
+			s.tag = bytes.Clone(lastToken)
 			s.tagId, ok = common.TagToTagId[string(lastToken)]
 			if !ok {
 				s.tag = nil
